@@ -1,7 +1,7 @@
 class Student {
   String name;
   int score;
-  int? currentAnswer;
+  dynamic currentAnswer;
   bool? isCorrect;
 
   Student({
@@ -19,7 +19,7 @@ class Student {
   Student copyWith({
     String? name,
     int? score,
-    int? currentAnswer,
+    dynamic currentAnswer,
     bool? isCorrect,
   }) {
     return Student(
@@ -34,7 +34,7 @@ class Student {
     return Student(
       name: json['name'] as String,
       score: json['score'] as int? ?? 0,
-      currentAnswer: json['currentAnswer'] as int?,
+      currentAnswer: json['currentAnswer'],
       isCorrect: json['isCorrect'] as bool?,
     );
   }

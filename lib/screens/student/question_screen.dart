@@ -13,7 +13,8 @@ class QuestionScreen extends StatefulWidget {
 }
 
 class _QuestionScreenState extends State<QuestionScreen> {
-  int? _selectedAnswer;
+  dynamic _selectedAnswer;
+  final TextEditingController _textAnswerController = TextEditingController();
   bool _answerLocked = false;
   String? _resultMessage; // 'correct', 'wrong', 'timeout'
   int? _pointsEarned;
@@ -36,6 +37,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
   @override
   void dispose() {
     _navigationTimer?.cancel();
+    _textAnswerController.dispose();
     super.dispose();
   }
 
@@ -61,6 +63,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
             _resultMessage = null;
             _pointsEarned = null;
             _revealHandled = false; // ✅ Reset reveal guard
+            _textAnswerController.clear();
           });
         }
       });
@@ -71,18 +74,18 @@ class _QuestionScreenState extends State<QuestionScreen> {
   }
 
   // ✅ Handle reveal OUTSIDE build() using postFrameCallback
-  void _handleReveal(GameProvider provider, int? correctIndex, int timeRemaining, int basePoints) {
+  void _handleReveal(GameProvider provider, int timeRemaining, int basePoints) {
     if (_revealHandled) return; // ✅ Prevent duplicate handling
     _revealHandled = true;
 
     String result;
     int points;
 
-    if (_selectedAnswer == null) {
+    if (_selectedAnswer == null || (_selectedAnswer is String && (_selectedAnswer as String).isEmpty)) {
       result = 'timeout';
       points = 0;
     } else {
-      final isCorrect = _selectedAnswer == correctIndex;
+      final isCorrect = provider.currentQuestion?.isAnswerCorrect(_selectedAnswer) ?? false;
       final timeBonus = timeRemaining * 10;
       points = isCorrect ? (basePoints + timeBonus) : 0;
       result = isCorrect ? 'correct' : 'wrong';
@@ -107,14 +110,14 @@ class _QuestionScreenState extends State<QuestionScreen> {
     });
   }
 
-  void _handleAnswer(int answerIndex) {
+  void _handleAnswer(dynamic answer) {
     if (_answerLocked) return;
     setState(() {
       _answerLocked = true;
-      _selectedAnswer = answerIndex;
+      _selectedAnswer = answer;
     });
     final provider = Provider.of<GameProvider>(context, listen: false);
-    provider.submitStudentAnswer(answerIndex);
+    provider.submitStudentAnswer(answer);
   }
 
   @override
@@ -177,7 +180,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
     // ✅ Handle reveal safely (guarded by _revealHandled flag)
     if (isRevealed && !_revealHandled) {
-      _handleReveal(provider, correctIndex, timeRemaining, question.points);
+      _handleReveal(provider, timeRemaining, question.points);
     }
 
     return Scaffold(
@@ -237,30 +240,32 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
               // Answer buttons
               Expanded(
-                child: options.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Waiting for question options...',
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(options.length, (index) {
-                          final isSelected = _selectedAnswer == index;
-                          final isCorrectAnswer = correctIndex == index;
+                child: question.type.name == 'text'
+                    ? _buildTextAnswerInput(isRevealed, isAnswering)
+                    : options.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'Waiting for question options...',
+                              style: TextStyle(color: Colors.white70, fontSize: 14),
+                            ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(options.length, (index) {
+                              final isSelected = _selectedAnswer == index;
+                              final isCorrectAnswer = correctIndex == index;
 
-                          return AnswerButton(
-                            text: options[index],
-                            index: index,
-                            isSelected: isSelected,
-                            isCorrect: isCorrectAnswer,
-                            showResult: isRevealed,
-                            isEnabled: !_answerLocked && isAnswering,
-                            onPressed: () => _handleAnswer(index),
-                          );
-                        }),
-                      ),
+                              return AnswerButton(
+                                text: options[index],
+                                index: index,
+                                isSelected: isSelected,
+                                isCorrect: isCorrectAnswer,
+                                showResult: isRevealed,
+                                isEnabled: !_answerLocked && isAnswering,
+                                onPressed: () => _handleAnswer(index),
+                              );
+                            }),
+                          ),
               ),
 
               // Result message
@@ -330,6 +335,64 @@ class _QuestionScreenState extends State<QuestionScreen> {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextAnswerInput(bool isRevealed, bool isAnswering) {
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _textAnswerController,
+              enabled: !_answerLocked && isAnswering,
+              style: const TextStyle(color: Colors.white, fontSize: 18),
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                hintText: 'Type your answer here...',
+                hintStyle: const TextStyle(color: Colors.white54),
+                filled: true,
+                fillColor: Colors.white.withAlpha((0.1 * 255).round()),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              ),
+              onSubmitted: (val) {
+                if (!_answerLocked && isAnswering && val.trim().isNotEmpty) {
+                  _handleAnswer(val.trim());
+                }
+              },
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: (!_answerLocked && isAnswering)
+                  ? () {
+                      final val = _textAnswerController.text.trim();
+                      if (val.isNotEmpty) {
+                        _handleAnswer(val);
+                      }
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                disabledBackgroundColor: Colors.grey[800],
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: const Text(
+                'Submit Answer',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+            ),
+          ],
         ),
       ),
     );

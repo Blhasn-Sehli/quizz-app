@@ -6,14 +6,30 @@ import '../../widgets/timer_bar.dart';
 import '../../models/question.dart';
 import '../../models/game_session.dart';
 
-class HostGameScreen extends StatelessWidget {
+class HostGameScreen extends StatefulWidget {
   const HostGameScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HostGameScreen> createState() => _HostGameScreenState();
+}
+
+class _HostGameScreenState extends State<HostGameScreen> {
+  bool _navigationTriggered = false;
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<GameProvider>(context);
     final session = provider.session;
     final question = provider.currentQuestion;
+
+    if (session != null && session.gameEnded && !_navigationTriggered) {
+      _navigationTriggered = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          GoRouter.of(context).go('/teacher/leaderboard');
+        }
+      });
+    }
 
     if (session == null || question == null) {
       return const Scaffold(
@@ -112,13 +128,32 @@ class HostGameScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               // Student answers summary
-              Text(
-                '${session.students.where((s) => s.currentAnswer != null).length} / ${session.students.length} answered',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 16,
-                ),
-                textAlign: TextAlign.center,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '${session.students.where((s) => s.currentAnswer != null).length} / ${session.students.length} answered',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (session.gameStarted &&
+                      provider.questionState == 'answering' &&
+                      provider.timeRemaining > 0) ...[
+                    const SizedBox(width: 20),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red[600],
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                      onPressed: () => provider.endQuestion(),
+                      icon: const Icon(Icons.timer_off, size: 18, color: Colors.white),
+                      label: const Text('End Early', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 10),
               // Stats area
@@ -334,7 +369,7 @@ class HostGameScreen extends StatelessWidget {
       itemCount: answeredStudents.length,
       itemBuilder: (context, index) {
         final student = answeredStudents[index];
-        final answer = student.currentAnswer as String;
+        final answer = student.currentAnswer.toString();
         final isCorrect = student.isCorrect ?? false;
 
         return Container(
@@ -401,7 +436,7 @@ class HostGameScreen extends StatelessWidget {
       child: Column(
         children: [
           // Correct answer banner
-          if (correctIndex != null)
+          if (question.type != QuestionType.text && correctIndex != null)
             Container(
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.only(bottom: 20),
@@ -426,7 +461,32 @@ class HostGameScreen extends StatelessWidget {
                 ],
               ),
             ),
-          // Live answer stats bar chart
+          if (question.type == QuestionType.text)
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.green[700]?.withAlpha((0.8 * 255).round()),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.green[400]!, width: 2),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green[400], size: 32),
+                  const SizedBox(width: 12),
+                  Text(
+                    'KEYWORDS: ${question.correctAnswerText}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          // Live answer stats
           Text(
             'Answer Distribution',
             style: TextStyle(
@@ -436,12 +496,15 @@ class HostGameScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          _buildBarStats(question, question.options!, [
-            const Color(0xFFE21B3C), // Red
-            const Color(0xFF1368CE), // Blue
-            const Color(0xFFFFA602), // Yellow
-            const Color(0xFF26890C), // Green
-          ], session, showLabels: true, highlightCorrect: correctIndex),
+          if (question.type != QuestionType.text)
+            _buildBarStats(question, question.options!, [
+              const Color(0xFFE21B3C), // Red
+              const Color(0xFF1368CE), // Blue
+              const Color(0xFFFFA602), // Yellow
+              const Color(0xFF26890C), // Green
+            ], session, showLabels: true, highlightCorrect: correctIndex)
+          else
+            _buildTextAnswersStats(question, session),
           const SizedBox(height: 30),
           // Next button or end game
           if (!isGameEnded)

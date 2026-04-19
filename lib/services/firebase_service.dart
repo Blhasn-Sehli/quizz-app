@@ -128,11 +128,17 @@ class FirebaseService {
       students[studentIndex]['currentAnswer'] = answer;
       // isCorrect will be calculated after question ends
 
-      // Update answerCounts atomically
-      await sessionRef.update({
-        'students': students,
-        'answerCounts.$answer': FieldValue.increment(1),
-      });
+      // Update answerCounts atomically ONLY if answer is an int (for multiple choice statistics)
+      if (answer is int) {
+        await sessionRef.update({
+          'students': students,
+          'answerCounts.$answer': FieldValue.increment(1),
+        });
+      } else {
+        await sessionRef.update({
+          'students': students,
+        });
+      }
     }
   }
 

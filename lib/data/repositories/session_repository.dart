@@ -125,7 +125,7 @@ class SessionRepository {
   }
 
   /// Student submits answer
-  Future<void> submitAnswer(String pin, String studentName, int answer) async {
+  Future<void> submitAnswer(String pin, String studentName, dynamic answer) async {
     if (!isFirebaseAvailable) return;
     await _firebase.submitAnswer(pin, studentName, answer);
   }

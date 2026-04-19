@@ -198,7 +198,7 @@ class GameProvider extends ChangeNotifier {
 
       if (newTime <= 0) {
         timer.cancel();
-        _endQuestion();
+        endQuestion();
       }
     });
   }
@@ -213,7 +213,7 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _endQuestion() async {
+  Future<void> endQuestion() async {
     _localTimer?.cancel();
     _simulationTimer?.cancel();
 
@@ -221,7 +221,8 @@ class GameProvider extends ChangeNotifier {
     final question = _state.currentQuestion;
     if (session != null && question != null) {
       final updatedStudents = session.students.map((student) {
-        if (student.currentAnswer == question.correctIndex) {
+        final isCorrect = question.isAnswerCorrect(student.currentAnswer);
+        if (isCorrect) {
           final baseScore = question.points;
           final timeBonus = session.timeRemaining * 10;
           final newScore = (student.score + baseScore + timeBonus).clamp(0, 2000);
@@ -240,7 +241,7 @@ class GameProvider extends ChangeNotifier {
           await _sessionRepo.revealAnswer(_state.pin!, question.correctIndex);
           // Update individual student scores/result via repository
           for (final student in updatedStudents) {
-            if (student.currentAnswer == question.correctIndex) {
+            if (question.isAnswerCorrect(student.currentAnswer)) {
               final points = question.points + (session.timeRemaining * 10);
               await _sessionRepo.updateStudentResult(
                 _state.pin!,
@@ -332,7 +333,7 @@ class GameProvider extends ChangeNotifier {
 
         if (newTime <= 0) {
           timer.cancel();
-          _endQuestion();
+          endQuestion();
         }
       });
 
@@ -416,27 +417,29 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void submitStudentAnswer(int answerIndex) {
+  void submitStudentAnswer(dynamic answer) {
     final session = _state.session;
     final question = _state.currentQuestion;
     if (session == null || question == null) return;
 
     if (_useFirebase && _state.currentStudentName != null && _state.pin != null) {
-      _sessionRepo.submitAnswer(_state.pin!, _state.currentStudentName!, answerIndex);
+      _sessionRepo.submitAnswer(_state.pin!, _state.currentStudentName!, answer);
     } else {
       // Mock mode: update local state
       if (session.students.isNotEmpty) {
         final student = session.students.first.copyWith(
-          currentAnswer: answerIndex,
-          isCorrect: answerIndex == question.correctIndex,
+          currentAnswer: answer,
+          isCorrect: question.isAnswerCorrect(answer),
         );
         final updatedStudents = List<Student>.from(session.students);
         if (updatedStudents.isNotEmpty) {
           updatedStudents[0] = student;
         }
-        // Update answerCounts
+        // Update answerCounts only if it's an int (multiple choice)
         final newAnswerCounts = Map<int, int>.from(session.answerCounts);
-        newAnswerCounts[answerIndex] = (newAnswerCounts[answerIndex] ?? 0) + 1;
+        if (answer is int) {
+          newAnswerCounts[answer] = (newAnswerCounts[answer] ?? 0) + 1;
+        }
         final newSession = session.copyWith(
           students: updatedStudents,
           answerCounts: newAnswerCounts,
