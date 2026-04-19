@@ -20,6 +20,14 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   String _searchQuery = '';
   Timer? _debounce;
   _SortOption _sort = _SortOption.newest;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-load quizzes for the logged-in teacher when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
+  }
 
   @override
   void dispose() {
@@ -63,9 +71,11 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   }
 
   Future<void> _refresh() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
     final provider = Provider.of<GameProvider>(context, listen: false);
     await provider.loadSavedQuizzes();
-    if (mounted) setState(() {});
+    if (mounted) setState(() => _isLoading = false);
   }
 
   Future<void> _launch(Quiz quiz) async {
@@ -124,16 +134,18 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
           _buildSearchBar(),
           _buildSortBar(quizzes.length),
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: _refresh,
-              color: AppColors.primaryLight,
-              backgroundColor: AppColors.surface,
-              child: quizzes.isEmpty
-                  ? _buildEmptyState()
-                  : isWide
-                      ? _buildGrid(context, quizzes)
-                      : _buildList(context, quizzes),
-            ),
+            child: _isLoading
+                ? _buildLoadingState()
+                : RefreshIndicator(
+                    onRefresh: _refresh,
+                    color: AppColors.primaryLight,
+                    backgroundColor: AppColors.surface,
+                    child: quizzes.isEmpty
+                        ? _buildEmptyState()
+                        : isWide
+                            ? _buildGrid(context, quizzes)
+                            : _buildList(context, quizzes),
+                  ),
           ),
         ],
       ),
@@ -281,6 +293,39 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
         onPlay: () => _launch(quizzes[i]),
         onDelete: () => _delete(quizzes[i]),
         compact: false,
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [
+                AppColors.primary.withOpacity(0.12),
+                AppColors.accent.withOpacity(0.12),
+              ]),
+              shape: BoxShape.circle,
+            ),
+            child: const CircularProgressIndicator(
+              color: AppColors.primaryLight,
+              strokeWidth: 3,
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Loading your quizzes…',
+            style: TextStyle(
+              color: AppColors.textSub,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -265,32 +265,69 @@ class FirebaseService {
   // ====================
 
   Future<void> saveQuizToFirestore(String title, List<Map<String, dynamic>> questions) async {
-    if (_currentUser == null) return;
+    final user = _auth?.currentUser;
+    if (user == null) {
+      developer.log('saveQuizToFirestore: no authenticated user, skipping save.');
+      return;
+    }
 
     final quizData = {
       'title': title,
       'questions': questions,
-      'userId': _currentUser!.uid,
+      'userId': user.uid,
       'createdAt': FieldValue.serverTimestamp(),
+      'playCount': 0,
     };
 
     await firestore
         .collection('quizzes')
         .add(quizData);
+
+    developer.log('Quiz "$title" saved for user ${user.uid}');
   }
 
   Future<List<Map<String, dynamic>>> loadSavedQuizzes() async {
-    if (_currentUser == null) return [];
+    final user = _auth?.currentUser;
+    if (user == null) {
+      developer.log('loadSavedQuizzes: no authenticated user.');
+      return [];
+    }
 
-    final snapshot = await firestore
-        .collection('quizzes')
-        .where('userId', isEqualTo: _currentUser!.uid)
-        .orderBy('createdAt', descending: true)
-        .get();
+    try {
+      // Requires a composite index on (userId ASC, createdAt DESC).
+      // If the index is missing, Firebase will throw and we fall back below.
+      final snapshot = await firestore
+          .collection('quizzes')
+          .where('userId', isEqualTo: user.uid)
+          .orderBy('createdAt', descending: true)
+          .get();
 
-    return snapshot.docs
-        .map((doc) => {'id': doc.id, ...doc.data()})
-        .toList();
+      developer.log('Loaded ${snapshot.docs.length} quizzes for user ${user.uid}');
+      return snapshot.docs
+          .map((doc) => {'id': doc.id, ...doc.data()})
+          .toList();
+    } catch (e) {
+      // Fallback: load without ordering (no composite index needed)
+      developer.log(
+        'loadSavedQuizzes: ordered query failed ($e). '
+        'Create index in Firebase Console or deploy firestore.indexes.json. '
+        'Falling back to unordered query.',
+      );
+      try {
+        final snapshot = await firestore
+            .collection('quizzes')
+            .where('userId', isEqualTo: user.uid)
+            .get();
+
+        developer.log('Fallback loaded ${snapshot.docs.length} quizzes (unordered)');
+        return snapshot.docs
+            .map((doc) => {'id': doc.id, ...doc.data()})
+            .toList();
+      } catch (e2) {
+        developer.log('loadSavedQuizzes fallback also failed: $e2');
+        return [];
+      }
+    }
   }
 
   Future<void> deleteSavedQuiz(String quizId) async {

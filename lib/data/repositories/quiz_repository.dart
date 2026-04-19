@@ -1,5 +1,6 @@
 import '../../models/quiz.dart';
 import '../../services/firebase_service.dart';
+import '../../services/auth_service.dart';
 import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -7,16 +8,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Abstracts away the data source (Firestore, local storage, mock) from business logic.
 class QuizRepository {
   final FirebaseService _firebase;
+  final AuthService _auth;
 
-  QuizRepository(this._firebase);
+  QuizRepository(this._firebase) : _auth = AuthService();
 
   /// Check if Firebase is available for quiz operations
   bool get isFirebaseAvailable => _firebase.isInitialized;
 
   /// Save a quiz to persistent storage.
-  /// If Firebase is available, saves to Firestore with metadata.
+  /// If Firebase is available and teacher is logged in, saves to Firestore with userId.
   /// Otherwise, keeps in memory (or could use local storage in future).
-  Future<void> saveQuiz(Quiz quiz, {String? userId}) async {
+  Future<void> saveQuiz(Quiz quiz) async {
+    final userId = _auth.currentUser?.uid;
     if (isFirebaseAvailable && userId != null) {
       // Convert quiz to JSON list of maps
       final questionsJson = quiz.questions
@@ -26,17 +29,24 @@ class QuizRepository {
         quiz.title,
         questionsJson,
       );
+      developer.log('Quiz saved to Firestore for user $userId');
     } else {
+      developer.log('Quiz not saved: Firebase=${isFirebaseAvailable}, userId=$userId');
       // In mock mode, just return (the provider will cache in memory)
-      // Could implement local storage here later
       return;
     }
   }
 
-  /// Load all saved quizzes from persistent storage.
-  /// Returns empty list if none available or Firebase not initialized.
+  /// Load all saved quizzes for the currently logged-in teacher.
+  /// Returns empty list if no user is logged in or Firebase not initialized.
   Future<List<Quiz>> loadSavedQuizzes() async {
     if (!isFirebaseAvailable) {
+      return [];
+    }
+
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) {
+      developer.log('loadSavedQuizzes: teacher not logged in, returning empty list.');
       return [];
     }
 
@@ -46,12 +56,13 @@ class QuizRepository {
           .map((map) {
             try {
               return Quiz.fromJson({
+                'id': map['id'] as String?,        // Firestore document ID
                 'title': map['title'] as String? ?? 'Untitled Quiz',
                 'questions': map['questions'] as List<dynamic>? ?? [],
-                // Include metadata fields if present in future
+                'createdAt': map['createdAt'],      // Firestore Timestamp
+                'playCount': map['playCount'] as int? ?? 0,
               });
             } catch (e) {
-              // Skip invalid quiz data
               developer.log('Failed to parse quiz: $e');
               return null;
             }
