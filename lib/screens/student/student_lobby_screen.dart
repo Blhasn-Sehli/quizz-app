@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../routes/app_routes.dart';
 import 'package:quizz_app/constants/app_colors.dart';
 import '../../providers/game_provider.dart';
 
@@ -55,15 +56,15 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
 
     if (shouldShowLeaderboard) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/student/leaderboard');
+        if (mounted) context.go(AppRoutes.studentLeaderboard);
       });
     } else if (shouldShowQuestion) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/student/question');
+        if (mounted) context.go(AppRoutes.studentQuestion);
       });
     } else if (shouldRecoverToLeaderboard) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/student/leaderboard');
+        if (mounted) context.go(AppRoutes.studentLeaderboard);
       });
     }
 

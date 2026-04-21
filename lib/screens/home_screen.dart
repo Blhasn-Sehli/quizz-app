@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../routes/app_routes.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/game_provider.dart';
@@ -247,7 +248,7 @@ class _WebHero extends StatelessWidget {
                                 label: "I'm a Student",
                                 emoji: '🎮',
                                 gradient: const [Color(0xFF059669), Color(0xFF10B981)],
-                                onTap: () => context.push('/student/join'),
+                                onTap: () => context.go(AppRoutes.studentJoin),
                               ),
                             ],
                           ),
@@ -746,8 +747,8 @@ class _TeacherButton extends StatelessWidget {
           subtitle: 'Create & host quizzes',
           gradientColors: const [Color(0xFF4F46E5), Color(0xFF7C3AED)],
           onTap: () => isLoggedIn
-              ? context.push('/teacher/quiz-creator')
-              : context.push('/teacher/login'),
+              ? context.go(AppRoutes.quizCreator)
+              : context.go(AppRoutes.login),
         );
       },
     );
@@ -762,7 +763,7 @@ class _StudentButton extends StatelessWidget {
       title: "I'm a Student",
       subtitle: 'Join with a PIN code',
       gradientColors: const [Color(0xFF059669), Color(0xFF10B981)],
-      onTap: () => context.push('/student/join'),
+      onTap: () => context.go(AppRoutes.studentJoin),
     );
   }
 }

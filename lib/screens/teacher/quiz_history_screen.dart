@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../routes/app_routes.dart';
 import 'package:quizz_app/models/question.dart';
 import '../../providers/game_provider.dart';
 import '../../models/quiz.dart';
@@ -82,7 +83,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
     final provider = Provider.of<GameProvider>(context, listen: false);
     try {
       await provider.playQuiz(quiz);
-      if (mounted) context.push('/teacher/lobby');
+      if (mounted) context.go(AppRoutes.teacherLobby);
     } catch (e) {
       _showSnack('Failed to launch: $e', AppColors.danger);
     }
@@ -378,7 +379,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => context.push('/teacher/quiz-creator'),
+          onTap: () => context.go(AppRoutes.quizCreator),
           borderRadius: BorderRadius.circular(16),
           child: const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),

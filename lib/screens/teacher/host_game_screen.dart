@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../routes/app_routes.dart';
 import '../../providers/game_provider.dart';
 import '../../widgets/timer_bar.dart';
 import '../../models/question.dart';
@@ -26,7 +27,7 @@ class _HostGameScreenState extends State<HostGameScreen> {
       _navigationTriggered = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          GoRouter.of(context).go('/teacher/leaderboard');
+          GoRouter.of(context).go(AppRoutes.teacherLeaderboard);
         }
       });
     }
@@ -526,7 +527,7 @@ class _HostGameScreenState extends State<HostGameScreen> {
           else
             ElevatedButton.icon(
               onPressed: () {
-                GoRouter.of(context).go('/teacher/leaderboard');
+                GoRouter.of(context).go(AppRoutes.teacherLeaderboard);
               },
               icon: const Icon(Icons.leaderboard),
               label: const Text('View Final Leaderboard'),

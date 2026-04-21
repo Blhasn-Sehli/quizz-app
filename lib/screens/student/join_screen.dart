@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../routes/app_routes.dart';
 import '../../providers/game_provider.dart';
 import '../../constants/app_colors.dart';
 
@@ -103,7 +104,7 @@ class _JoinScreenState extends State<JoinScreen>
     try {
       await provider.studentJoin(pin, name);
       if (mounted) {
-        context.push('/student/lobby', extra: {'pin': pin, 'name': name});
+        context.go(AppRoutes.studentLobby, extra: {'pin': pin, 'name': name});
       }
     } catch (e) {
       setState(() {

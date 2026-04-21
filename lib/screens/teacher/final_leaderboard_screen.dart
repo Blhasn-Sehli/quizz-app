@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../routes/app_routes.dart';
 import 'package:quizz_app/constants/app_colors.dart';
 import '../../providers/game_provider.dart';
 
@@ -483,7 +484,7 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
               isGradient: false,
               onTap: () {
                 provider.resetGame();
-                context.go('/');
+                context.go(AppRoutes.home);
               },
             ),
           ),
@@ -495,7 +496,7 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
               isGradient: true,
               onTap: () {
                 provider.resetGame();
-                context.push('/teacher/quiz-creator');
+                context.go(AppRoutes.quizCreator);
               },
             ),
           ),

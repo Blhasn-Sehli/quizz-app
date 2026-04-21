@@ -5,7 +5,7 @@ import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Repository responsible for all quiz persistence operations.
-/// Abstracts away the data source (Firestore, local storage, mock) from business logic.
+/// Abstracts away Firestore access from business logic.
 class QuizRepository {
   final FirebaseService _firebase;
   final AuthService _auth;
@@ -16,8 +16,7 @@ class QuizRepository {
   bool get isFirebaseAvailable => _firebase.isInitialized;
 
   /// Save a quiz to persistent storage.
-  /// If Firebase is available and teacher is logged in, saves to Firestore with userId.
-  /// Otherwise, keeps in memory (or could use local storage in future).
+  /// If Firebase is available and teacher is logged in, saves to Firestore.
   Future<void> saveQuiz(Quiz quiz) async {
     final userId = _auth.currentUser?.uid;
     if (isFirebaseAvailable && userId != null) {
@@ -32,7 +31,6 @@ class QuizRepository {
       developer.log('Quiz saved to Firestore for user $userId');
     } else {
       developer.log('Quiz not saved: Firebase=${isFirebaseAvailable}, userId=$userId');
-      // In mock mode, just return (the provider will cache in memory)
       return;
     }
   }

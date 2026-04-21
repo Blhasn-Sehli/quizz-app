@@ -5,6 +5,7 @@ import '../../providers/game_provider.dart';
 import '../../models/question.dart';
 import '../../services/auth_service.dart';
 import '../../constants/app_colors.dart';
+import '../../routes/app_routes.dart';
 
 // ─── Quiz Creator Screen ──────────────────────────────────────────────────────
 class QuizCreatorScreen extends StatefulWidget {
@@ -220,7 +221,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
         IconButton(
           icon: const Icon(Icons.history_rounded, color: AppColors.textSub),
           tooltip: 'Quiz History',
-          onPressed: () => context.push('/teacher/quiz-history'),
+          onPressed: () => context.go(AppRoutes.quizHistory),
         ),
         // Logout
         IconButton(
@@ -229,7 +230,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
           onPressed: () async {
             try {
               await AuthService().signOut();
-              if (mounted) context.go('/');
+              if (mounted) context.go(AppRoutes.home);
             } catch (e) {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -308,7 +309,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
                 _questions,
                 title: _titleController.text.trim(),
               );
-              context.push('/teacher/lobby');
+              context.go(AppRoutes.teacherLobby);
             },
           ),
           const SizedBox(height: 12),
@@ -377,6 +378,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
         Expanded(
           child: ReorderableListView.builder(
             padding: const EdgeInsets.all(16),
+            buildDefaultDragHandles: false,
             itemCount: _questions.length,
             onReorder: (oldIndex, newIndex) {
               setState(() {
@@ -390,6 +392,10 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
                 key: ValueKey(_questions[index]),
                 question: _questions[index],
                 index: index,
+                dragHandle: ReorderableDragStartListener(
+                  index: index,
+                  child: _QuestionDragHandle(index: index),
+                ),
                 typeColor: _typeColor(_questions[index].type),
                 typeLabel: _typeLabel(_questions[index].type),
                 typeIcon: _typeIcon(_questions[index].type),
@@ -439,7 +445,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
                   _questions,
                   title: _titleController.text.trim(),
                 );
-                context.push('/teacher/lobby');
+                context.go(AppRoutes.teacherLobby);
               },
             ),
           ),
@@ -547,6 +553,7 @@ class _StatRow extends StatelessWidget {
 class _QuestionCard extends StatelessWidget {
   final Question question;
   final int index;
+  final Widget dragHandle;
   final Color typeColor;
   final String typeLabel;
   final IconData typeIcon;
@@ -557,6 +564,7 @@ class _QuestionCard extends StatelessWidget {
     Key? key,
     required this.question,
     required this.index,
+    required this.dragHandle,
     required this.typeColor,
     required this.typeLabel,
     required this.typeIcon,
@@ -566,119 +574,176 @@ class _QuestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        gradient: AppColors.gradCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Drag handle + number
-            Column(
-              children: [
-                const Icon(Icons.drag_indicator_rounded,
-                    color: AppColors.textMuted, size: 20),
-                const SizedBox(height: 4),
-                Container(
-                  width: 28,
-                  height: 28,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.gradBtn,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${index + 1}',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 12),
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 560;
+        final actionIconSize = compact ? 16.0 : 18.0;
+        final actionPadding = compact ? 7.0 : 8.0;
+
+        final actionButtons = compact
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Question text
-                  Text(
-                    question.text,
-                    style: const TextStyle(
-                        color: AppColors.text,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  // Type badge
-                  Row(
-                    children: [
-                      _TypeBadge(
-                          color: typeColor, icon: typeIcon, label: typeLabel),
-                      const SizedBox(width: 8),
-                      _MetaBadge(
-                          icon: Icons.timer_outlined,
-                          label: '${question.timeLimit}s',
-                          color: AppColors.textSub),
-                      const SizedBox(width: 8),
-                      _MetaBadge(
-                          icon: Icons.star_outline_rounded,
-                          label: '${question.points}',
-                          color: AppColors.warning),
-                    ],
-                  ),
-                  // Options preview (MC / YesNo)
-                  if ((question.type == QuestionType.multipleChoice ||
-                          question.type == QuestionType.yesNo) &&
-                      question.options != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: question.options!
-                            .asMap()
-                            .entries
-                            .map(
-                              (e) => _OptionChip(
-                                label:
-                                    '${String.fromCharCode(65 + e.key)}) ${e.value}',
-                                isCorrect: e.key == question.correctIndex,
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Actions
-            Column(
-              children: [
-                _IconBtn(
+                  _IconBtn(
                     icon: Icons.edit_rounded,
                     color: AppColors.primary,
-                    onTap: onEdit),
-                const SizedBox(height: 4),
-                _IconBtn(
+                    onTap: onEdit,
+                    iconSize: actionIconSize,
+                    padding: actionPadding,
+                  ),
+                  const SizedBox(width: 8),
+                  _IconBtn(
                     icon: Icons.delete_rounded,
                     color: AppColors.danger,
-                    onTap: onDelete),
+                    onTap: onDelete,
+                    iconSize: actionIconSize,
+                    padding: actionPadding,
+                  ),
+                ],
+              )
+            : Column(
+                children: [
+                  _IconBtn(
+                    icon: Icons.edit_rounded,
+                    color: AppColors.primary,
+                    onTap: onEdit,
+                    iconSize: actionIconSize,
+                    padding: actionPadding,
+                  ),
+                  const SizedBox(height: 6),
+                  _IconBtn(
+                    icon: Icons.delete_rounded,
+                    color: AppColors.danger,
+                    onTap: onDelete,
+                    iconSize: actionIconSize,
+                    padding: actionPadding,
+                  ),
+                ],
+              );
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            gradient: AppColors.gradCard,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Drag handle + number
+                dragHandle,
+                const SizedBox(width: 12),
+                // Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Question text
+                      Text(
+                        question.text,
+                        style: const TextStyle(
+                            color: AppColors.text,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      // Type + metadata
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _TypeBadge(
+                              color: typeColor,
+                              icon: typeIcon,
+                              label: typeLabel),
+                          _MetaBadge(
+                              icon: Icons.timer_outlined,
+                              label: '${question.timeLimit}s',
+                              color: AppColors.textSub),
+                          _MetaBadge(
+                              icon: Icons.star_outline_rounded,
+                              label: '${question.points}',
+                              color: AppColors.warning),
+                        ],
+                      ),
+                      // Options preview (MC / YesNo)
+                      if ((question.type == QuestionType.multipleChoice ||
+                              question.type == QuestionType.yesNo) &&
+                          question.options != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: question.options!
+                                .asMap()
+                                .entries
+                                .map(
+                                  (e) => _OptionChip(
+                                    label:
+                                        '${String.fromCharCode(65 + e.key)}) ${e.value}',
+                                    isCorrect: e.key == question.correctIndex,
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      if (compact) ...[
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: actionButtons,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (!compact) ...[
+                  const SizedBox(width: 10),
+                  actionButtons,
+                ],
               ],
             ),
-          ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _QuestionDragHandle extends StatelessWidget {
+  final int index;
+
+  const _QuestionDragHandle({required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Icon(Icons.drag_indicator_rounded,
+            color: AppColors.textMuted, size: 20),
+        const SizedBox(height: 4),
+        Container(
+          width: 28,
+          height: 28,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            gradient: AppColors.gradBtn,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            '${index + 1}',
+            style: const TextStyle(
+                color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -773,8 +838,14 @@ class _IconBtn extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+  final double iconSize;
+  final double padding;
   const _IconBtn(
-      {required this.icon, required this.color, required this.onTap});
+      {required this.icon,
+      required this.color,
+      required this.onTap,
+      this.iconSize = 16,
+      this.padding = 6});
 
   @override
   Widget build(BuildContext context) {
@@ -785,8 +856,8 @@ class _IconBtn extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: Icon(icon, color: color, size: 16),
+          padding: EdgeInsets.all(padding),
+          child: Icon(icon, color: color, size: iconSize),
         ),
       ),
     );

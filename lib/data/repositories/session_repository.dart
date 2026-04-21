@@ -21,8 +21,9 @@ class SessionRepository {
   /// Caller must cancel the subscription when done.
   Stream<GameSession> subscribeToSession(String pin) {
     if (!isFirebaseAvailable) {
-      // Return empty stream in mock mode
-      return const Stream.empty();
+      return Stream<GameSession>.error(
+        StateError('Firebase is not initialized.'),
+      );
     }
 
     final stream = _firebase
@@ -106,8 +107,7 @@ class SessionRepository {
   /// Check if a PIN exists (for validation before joining)
   Future<bool> validatePin(String pin) async {
     if (!isFirebaseAvailable) {
-      // Mock mode: accept any 6-digit PIN
-      return pin.length == 6 && RegExp(r'^\d{6}$').hasMatch(pin);
+      return false;
     }
     return await _firebase.pinExists(pin);
   }

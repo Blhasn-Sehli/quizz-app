@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../routes/app_routes.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
 import '../../widgets/answer_button.dart';
@@ -103,7 +104,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
         _navigationTimer?.cancel();
         _navigationTimer = Timer(const Duration(seconds: 3), () {
           if (mounted) {
-            GoRouter.of(context).go('/student/leaderboard');
+            GoRouter.of(context).go(AppRoutes.studentLeaderboard);
           }
         });
       }
@@ -143,9 +144,9 @@ class _QuestionScreenState extends State<QuestionScreen> {
           if (!mounted) return;
           final state = provider.questionState;
           if (provider.isGameEnded || state == 'ended' || state == 'revealed') {
-            context.go('/student/leaderboard');
+            context.go(AppRoutes.studentLeaderboard);
           } else {
-            context.go('/student/lobby');
+            context.go(AppRoutes.studentLobby);
           }
         });
       }

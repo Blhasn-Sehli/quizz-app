@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../routes/app_routes.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/auth_service.dart';
 
@@ -52,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         _emailController.text.trim(),
         _passwordController.text,
       );
-      if (mounted) context.go('/teacher/quiz-creator');
+      if (mounted) context.go(AppRoutes.quizCreator);
     } on FirebaseAuthException catch (e) {
       String msg = e.message ?? 'Sign-in failed';
       if (e.code == 'user-not-found')        msg = 'No account found with this email.';
@@ -435,7 +436,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             children: [
               const Text("Don't have an account? ", style: TextStyle(color: Color(0x73FFFFFF), fontSize: 14)),
               GestureDetector(
-                onTap: _isLoading ? null : () => context.push('/teacher/register'),
+                onTap: _isLoading ? null : () => context.go(AppRoutes.register),
                 child: const Text(
                   'Sign Up',
                   style: TextStyle(color: Color(0xFF818CF8), fontWeight: FontWeight.w700, fontSize: 14),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'providers/game_provider.dart';
+import 'routes/app_routes.dart';
 import 'services/firebase_service.dart';
 import 'services/auth_service.dart';
 import 'screens/home_screen.dart';
@@ -36,27 +37,34 @@ Future<void> main() async {
 }
 
 final GoRouter _router = GoRouter(
-  initialLocation: '/',
+  initialLocation: AppRoutes.home,
   redirect: (BuildContext context, GoRouterState state) async {
+    final location = state.matchedLocation;
+
+    // Legacy route compatibility.
+    final legacyTarget = AppRoutes.legacyRedirects[location];
+    if (legacyTarget != null) {
+      return legacyTarget;
+    }
+
     // Get current auth state
     final authService = AuthService();
     final isLoggedIn = authService.isLoggedIn;
-    final isGoingToTeacherRoute = state.matchedLocation.startsWith('/teacher/');
+    final isGoingToProtectedTeacherRoute =
+        AppRoutes.protectedTeacherRoutes.contains(location);
     final isGoingToLoginOrRegister =
-        state.matchedLocation == '/teacher/login' ||
-        state.matchedLocation == '/teacher/register';
+        location == AppRoutes.login || location == AppRoutes.register;
 
     // If going to a protected teacher route and not logged in, redirect to login
-    if (isGoingToTeacherRoute &&
+    if (isGoingToProtectedTeacherRoute &&
         !isGoingToLoginOrRegister &&
         !isLoggedIn) {
-      return '/teacher/login';
+      return AppRoutes.login;
     }
 
     // If logged in and going to login/register, go to quiz creator
-    if ((state.matchedLocation == '/teacher/login' ||
-        state.matchedLocation == '/teacher/register') && isLoggedIn) {
-      return '/teacher/quiz-creator';
+    if (isGoingToLoginOrRegister && isLoggedIn) {
+      return AppRoutes.quizCreator;
     }
 
     // Otherwise, allow the route
@@ -64,64 +72,64 @@ final GoRouter _router = GoRouter(
   },
   routes: <RouteBase>[
     GoRoute(
-      path: '/',
+      path: AppRoutes.home,
       builder: (BuildContext context, GoRouterState state) {
         return const HomeScreen();
       },
     ),
     // Teacher authentication routes
     GoRoute(
-      path: '/teacher/login',
+      path: AppRoutes.login,
       builder: (BuildContext context, GoRouterState state) {
         return const LoginScreen();
       },
     ),
     GoRoute(
-      path: '/teacher/register',
+      path: AppRoutes.register,
       builder: (BuildContext context, GoRouterState state) {
         return const RegisterScreen();
       },
     ),
     // Teacher routes
     GoRoute(
-      path: '/teacher/quiz-creator',
+      path: AppRoutes.quizCreator,
       builder: (BuildContext context, GoRouterState state) {
         return const QuizCreatorScreen();
       },
     ),
     GoRoute(
-      path: '/teacher/lobby',
+      path: AppRoutes.teacherLobby,
       builder: (BuildContext context, GoRouterState state) {
         return const TeacherLobbyScreen();
       },
     ),
     GoRoute(
-      path: '/teacher/host',
+      path: AppRoutes.hostGame,
       builder: (BuildContext context, GoRouterState state) {
         return const HostGameScreen();
       },
     ),
     GoRoute(
-      path: '/teacher/leaderboard',
+      path: AppRoutes.teacherLeaderboard,
       builder: (BuildContext context, GoRouterState state) {
         return const FinalLeaderboardScreen();
       },
     ),
     GoRoute(
-      path: '/teacher/quiz-history',
+      path: AppRoutes.quizHistory,
       builder: (BuildContext context, GoRouterState state) {
         return const QuizHistoryScreen();
       },
     ),
     // Student routes
     GoRoute(
-      path: '/student/join',
+      path: AppRoutes.studentJoin,
       builder: (BuildContext context, GoRouterState state) {
         return const JoinScreen();
       },
     ),
     GoRoute(
-      path: '/student/lobby',
+      path: AppRoutes.studentLobby,
       builder: (BuildContext context, GoRouterState state) {
         final args = state.extra as Map<String, String>?;
         return StudentLobbyScreen(
@@ -131,13 +139,13 @@ final GoRouter _router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/student/question',
+      path: AppRoutes.studentQuestion,
       builder: (BuildContext context, GoRouterState state) {
         return const QuestionScreen();
       },
     ),
     GoRoute(
-      path: '/student/leaderboard',
+      path: AppRoutes.studentLeaderboard,
       builder: (BuildContext context, GoRouterState state) {
         return const StudentLeaderboardScreen();
       },

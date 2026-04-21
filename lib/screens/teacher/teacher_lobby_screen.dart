@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../routes/app_routes.dart';
 import '../../providers/game_provider.dart';
 import '../../constants/app_colors.dart';
 
@@ -468,7 +469,7 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
             onTap: canStart
                 ? () {
                     provider.startGame();
-                    context.go('/teacher/host');
+                    context.go(AppRoutes.hostGame);
                   }
                 : null,
             borderRadius: BorderRadius.circular(16),

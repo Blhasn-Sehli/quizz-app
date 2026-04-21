@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../routes/app_routes.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/auth_service.dart';
 
@@ -68,7 +69,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     setState(() { _errorMessage = null; _isLoading = true; });
     try {
       await _authService.registerWithEmail(_emailController.text.trim(), _passwordController.text);
-      if (mounted) context.go('/teacher/quiz-creator');
+      if (mounted) context.go(AppRoutes.quizCreator);
     } on FirebaseAuthException catch (e) {
       String msg = e.message ?? 'Registration failed';
       if (e.code == 'email-already-in-use') msg = 'Email already in use. Try signing in instead.';
@@ -124,7 +125,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _BackButton(onTap: () => context.go('/')),
+                        _BackButton(onTap: () => context.go(AppRoutes.home)),
                         const Spacer(),
                         RichText(
                           text: const TextSpan(
@@ -222,7 +223,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                               const SizedBox(height: 12),
                               Align(
                                 alignment: Alignment.centerLeft,
-                                child: _BackButton(onTap: () => context.go('/')),
+                                child: _BackButton(onTap: () => context.go(AppRoutes.home)),
                               ),
                               const SizedBox(height: 32),
                               Container(

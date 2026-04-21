@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../routes/app_routes.dart';
 import 'package:quizz_app/constants/app_colors.dart';
 import '../../providers/game_provider.dart';
 
@@ -28,6 +29,8 @@ class _StudentLeaderboardScreenState
 
   void _tryNavigate(GameProvider provider) {
     if (_navigationTriggered) return;
+    if (provider.session == null) return;
+    if (provider.isGameEnded) return;
 
     final currentIndex = provider.currentQuestionIndex;
     final currentState = provider.questionState;
@@ -44,7 +47,7 @@ class _StudentLeaderboardScreenState
       _navigationTriggered = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        context.go('/student/question');
+        context.go(AppRoutes.studentQuestion);
       });
     }
   }
@@ -343,10 +346,11 @@ class _StudentLeaderboardScreenState
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
           onTap: () {
+            _navigationTriggered = true;
             final provider = Provider.of<GameProvider>(context, listen: false);
             provider.resetGame();
             if (mounted) {
-              context.go('/student/join');
+              context.go(AppRoutes.studentJoin);
             }
           },
           child: Padding(
