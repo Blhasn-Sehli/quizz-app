@@ -40,4 +40,13 @@ class AppRoutes {
     hostGame,
     teacherLeaderboard,
   };
+
+  static String studentLobbyWithParams({
+    required String pin,
+    required String name,
+  }) {
+    final encodedPin = Uri.encodeQueryComponent(pin);
+    final encodedName = Uri.encodeQueryComponent(name);
+    return '$studentLobby?pin=$encodedPin&name=$encodedName';
+  }
 }

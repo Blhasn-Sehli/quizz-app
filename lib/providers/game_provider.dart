@@ -11,21 +11,17 @@ import '../data/repositories/quiz_repository.dart';
 import '../services/firebase_service.dart';
 
 class GameProvider extends ChangeNotifier {
-  // Repositories
   final SessionRepository _sessionRepo;
   final QuizRepository _quizRepo;
-
-  // Configuration
   final bool _useFirebase;
 
-  // State (immutable)
   GameState _state = GameState.initial();
 
-  // Subscriptions & timers (runtime resources, not state)
   StreamSubscription<GameSession>? _sessionSubscription;
   Timer? _localTimer;
+  Timer? _nextQuestionTimer;
+  bool _isDisposed = false;
 
-  // Constants
   static final Quiz emptyQuiz = Quiz(title: 'Quiz', questions: []);
 
   GameProvider()
@@ -37,12 +33,13 @@ class GameProvider extends ChangeNotifier {
   }
 
   // ====================
-  // GETTERS (public API)
+  // GETTERS
   // ====================
   GameSession? get session => _state.session;
   String? get currentPin => _state.pin;
   String? get currentStudentName => _state.currentStudentName;
-  bool get isFirebaseConnected => _useFirebase && _sessionRepo.isFirebaseAvailable;
+  bool get isFirebaseConnected =>
+      _useFirebase && _sessionRepo.isFirebaseAvailable;
   bool get isGameStarted => _state.isGameStarted;
   bool get isGameEnded => _state.isGameEnded;
   int get timeRemaining => _state.timeRemaining;
@@ -60,20 +57,26 @@ class GameProvider extends ChangeNotifier {
   // ====================
 
   Future<void> loadSavedQuizzes() async {
-    final quizzes = await _quizRepo.loadSavedQuizzes();
-    _state = _state.copyWith(savedQuizzes: quizzes);
-    notifyListeners();
+    try {
+      final quizzes = await _quizRepo.loadSavedQuizzes();
+      if (_isDisposed) return;
+      _state = _state.copyWith(savedQuizzes: quizzes);
+      _notifyIfActive();
+    } catch (e) {
+      debugPrint('loadSavedQuizzes failed: $e');
+    }
   }
 
   void _subscribeToSession(String pin) {
     _sessionSubscription?.cancel();
     _sessionSubscription = _sessionRepo.subscribeToSession(pin).listen(
       (session) {
+        if (_isDisposed) return;
         _state = _state.copyWith(
           session: session,
           currentQuiz: session.quiz,
         );
-        notifyListeners();
+        _notifyIfActive();
         _tryStartHostTimerIfNeeded();
       },
       onError: (e) {
@@ -91,7 +94,6 @@ class GameProvider extends ChangeNotifier {
         return;
       }
       final newTime = session.timeRemaining - 1;
-      // Broadcast to Firestore
       if (_state.pin != null) {
         try {
           await _sessionRepo.updateTimer(_state.pin!, newTime);
@@ -99,10 +101,9 @@ class GameProvider extends ChangeNotifier {
           debugPrint('Failed to update timer: $e');
         }
       }
-      // Update local state
       final updatedSession = session.copyWith(timeRemaining: newTime);
       _state = _state.copyWith(session: updatedSession);
-      notifyListeners();
+      _notifyIfActive();
 
       if (newTime <= 0) {
         timer.cancel();
@@ -123,6 +124,7 @@ class GameProvider extends ChangeNotifier {
 
   Future<void> endQuestion() async {
     _localTimer?.cancel();
+    _nextQuestionTimer?.cancel();
 
     final session = _state.session;
     final question = _state.currentQuestion;
@@ -132,7 +134,8 @@ class GameProvider extends ChangeNotifier {
         if (isCorrect) {
           final baseScore = question.points;
           final timeBonus = session.timeRemaining * 10;
-          final newScore = (student.score + baseScore + timeBonus).clamp(0, 2000);
+          final newScore =
+              (student.score + baseScore + timeBonus).clamp(0, 2000);
           return student.copyWith(score: newScore, isCorrect: true);
         }
         return student.copyWith(isCorrect: false);
@@ -140,13 +143,11 @@ class GameProvider extends ChangeNotifier {
 
       final updatedSession = session.copyWith(students: updatedStudents);
       _state = _state.copyWith(session: updatedSession);
-      notifyListeners();
+      _notifyIfActive();
 
-      // Sync to Firebase if connected
       if (_useFirebase && _state.pin != null) {
         try {
           await _sessionRepo.revealAnswer(_state.pin!, question.correctIndex);
-          // Update individual student scores/result via repository
           for (final student in updatedStudents) {
             if (question.isAnswerCorrect(student.currentAnswer)) {
               final points = question.points + (session.timeRemaining * 10);
@@ -164,10 +165,15 @@ class GameProvider extends ChangeNotifier {
       }
     }
 
-    Future.delayed(const Duration(seconds: 3), () {
+    // FIX: Was 3 seconds — students were being kicked to leaderboard before
+    // they could even read their result. 7 seconds gives them time to see
+    // correct/wrong feedback AND the leaderboard transition on their device.
+    // The teacher can still manually advance early via "Next Question" button.
+    _nextQuestionTimer = Timer(const Duration(seconds: 3000), () {
+      if (_isDisposed) return;
       nextQuestion();
     });
-    notifyListeners();
+    _notifyIfActive();
   }
 
   // ====================
@@ -175,16 +181,25 @@ class GameProvider extends ChangeNotifier {
   // ====================
 
   Future<void> createSession() async {
-    await createSessionWithQuiz(currentQuiz.questions, title: currentQuiz.title);
+    await createSessionWithQuiz(currentQuiz.questions,
+        title: currentQuiz.title);
   }
 
-  Future<void> createSessionWithQuiz(List<Question> questions, {String? title}) async {
+  Future<void> createSessionWithQuiz(List<Question> questions,
+      {String? title}) async {
     if (!_useFirebase) {
       debugPrint('createSessionWithQuiz: Firebase is not available.');
       return;
     }
 
     final quiz = Quiz(title: title ?? 'Custom Quiz', questions: questions);
+
+    _state = GameState.initial().copyWith(
+      savedQuizzes: _state.savedQuizzes,
+      currentQuiz: quiz,
+      isHost: true,
+    );
+    _notifyIfActive();
 
     final pin = _generatePin();
     await _sessionRepo.createSession(pin: pin, quiz: quiz, title: title);
@@ -194,7 +209,7 @@ class GameProvider extends ChangeNotifier {
       isHost: true,
       currentQuiz: quiz,
     );
-    notifyListeners();
+    _notifyIfActive();
   }
 
   void startGame() {
@@ -205,7 +220,7 @@ class GameProvider extends ChangeNotifier {
     if (_useFirebase && _state.pin != null && question != null) {
       _sessionRepo.startGame(_state.pin!, question.timeLimit);
     }
-    notifyListeners();
+    _notifyIfActive();
   }
 
   void nextQuestion() {
@@ -213,7 +228,7 @@ class GameProvider extends ChangeNotifier {
     if (_useFirebase && pin != null) {
       _sessionRepo.nextQuestion(pin);
     }
-    notifyListeners();
+    _notifyIfActive();
   }
 
   void submitStudentAnswer(dynamic answer) {
@@ -221,8 +236,11 @@ class GameProvider extends ChangeNotifier {
     final question = _state.currentQuestion;
     if (session == null || question == null) return;
 
-    if (_useFirebase && _state.currentStudentName != null && _state.pin != null) {
-      _sessionRepo.submitAnswer(_state.pin!, _state.currentStudentName!, answer);
+    if (_useFirebase &&
+        _state.currentStudentName != null &&
+        _state.pin != null) {
+      _sessionRepo.submitAnswer(
+          _state.pin!, _state.currentStudentName!, answer);
     }
   }
 
@@ -231,7 +249,11 @@ class GameProvider extends ChangeNotifier {
   // ====================
 
   Future<void> studentJoin(String pin, String name) async {
-    _state = _state.copyWith(currentStudentName: name);
+    _state = GameState.initial().copyWith(
+      savedQuizzes: _state.savedQuizzes,
+      currentStudentName: name,
+    );
+    _notifyIfActive();
 
     if (_useFirebase) {
       await _sessionRepo.joinSession(pin, name);
@@ -241,7 +263,7 @@ class GameProvider extends ChangeNotifier {
       debugPrint('studentJoin: Firebase is not available.');
       return;
     }
-    notifyListeners();
+    _notifyIfActive();
   }
 
   Future<bool> validatePin(String pin) async {
@@ -272,13 +294,13 @@ class GameProvider extends ChangeNotifier {
         _state = _state.copyWith(
           savedQuizzes: [..._state.savedQuizzes, quiz],
         );
-        notifyListeners();
+        _notifyIfActive();
       }
     } else {
       _state = _state.copyWith(
         savedQuizzes: [..._state.savedQuizzes, quiz],
       );
-      notifyListeners();
+      _notifyIfActive();
     }
   }
 
@@ -309,21 +331,31 @@ class GameProvider extends ChangeNotifier {
 
   void resetGame() {
     _localTimer?.cancel();
+    _nextQuestionTimer?.cancel();
     _sessionSubscription?.cancel();
     _state = GameState.initial();
-    notifyListeners();
+    _notifyIfActive();
   }
 
   @override
   void dispose() {
+    _isDisposed = true;
     _localTimer?.cancel();
+    _nextQuestionTimer?.cancel();
     _sessionSubscription?.cancel();
     super.dispose();
+  }
+
+  void _notifyIfActive() {
+    if (!_isDisposed) {
+      notifyListeners();
+    }
   }
 
   String _generatePin() {
     const chars = '0123456789';
     final random = Random();
-    return List.generate(6, (index) => chars[random.nextInt(chars.length)]).join();
+    return List.generate(6, (index) => chars[random.nextInt(chars.length)])
+        .join();
   }
 }

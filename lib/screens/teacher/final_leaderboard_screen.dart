@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
 import 'package:quizz_app/constants/app_colors.dart';
 import '../../providers/game_provider.dart';
+import '../../widgets/fallback_state_screen.dart';
 
 class FinalLeaderboardScreen extends StatefulWidget {
   const FinalLeaderboardScreen({Key? key}) : super(key: key);
@@ -15,6 +16,7 @@ class FinalLeaderboardScreen extends StatefulWidget {
 class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _confettiController;
+  bool _navigationLocked = false;
 
   @override
   void initState() {
@@ -37,11 +39,14 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
     final session = provider.session;
 
     if (session == null) {
-      return const Scaffold(
-        backgroundColor: AppColors.bg,
-        body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
+      return const FallbackStateScreen(
+        icon: Icons.emoji_events_rounded,
+        title: 'Leaderboard Unavailable',
+        message: 'The session ended or is no longer available. You can go back to the quiz creator or home.',
+        primaryLabel: 'Back to Quiz Creator',
+        primaryRoute: AppRoutes.quizCreator,
+        secondaryLabel: 'Go Home',
+        secondaryRoute: AppRoutes.home,
       );
     }
 
@@ -482,10 +487,7 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
               label: 'Back to Home',
               icon: Icons.home_rounded,
               isGradient: false,
-              onTap: () {
-                provider.resetGame();
-                context.go(AppRoutes.home);
-              },
+              onTap: () => _resetAndNavigate(context, provider, AppRoutes.home),
             ),
           ),
           const SizedBox(width: 12),
@@ -494,15 +496,33 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
               label: 'Play Again',
               icon: Icons.replay_rounded,
               isGradient: true,
-              onTap: () {
-                provider.resetGame();
-                context.go(AppRoutes.quizCreator);
-              },
+              onTap: () => _resetAndNavigate(
+                context,
+                provider,
+                AppRoutes.quizCreator,
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  void _resetAndNavigate(
+    BuildContext context,
+    GameProvider provider,
+    String route,
+  ) {
+    if (_navigationLocked) return;
+    _navigationLocked = true;
+
+    final router = GoRouter.of(context);
+    router.go(route);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      provider.resetGame();
+      _navigationLocked = false;
+    });
   }
 
   Widget _actionBtn({

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
 import '../../providers/game_provider.dart';
 import '../../constants/app_colors.dart';
+import '../../widgets/fallback_state_screen.dart';
 
 class TeacherLobbyScreen extends StatefulWidget {
   const TeacherLobbyScreen({Key? key}) : super(key: key);
@@ -50,10 +51,14 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
     final session = provider.session;
 
     if (session == null) {
-      return Scaffold(
-        backgroundColor: AppColors.bg,
-        appBar: _buildAppBar(context),
-        body: _buildNoSession(),
+      return const FallbackStateScreen(
+        icon: Icons.warning_amber_rounded,
+        title: 'No Active Session',
+        message: 'Create a quiz first to start a session.',
+        primaryLabel: 'Back to Quiz Creator',
+        primaryRoute: AppRoutes.quizCreator,
+        secondaryLabel: 'Go Home',
+        secondaryRoute: AppRoutes.home,
       );
     }
 
@@ -77,7 +82,13 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
       surfaceTintColor: Colors.transparent,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textSub),
-        onPressed: () => context.pop(),
+        onPressed: () {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go(AppRoutes.quizCreator);
+          }
+        },
       ),
       title: Row(
         children: [
@@ -508,32 +519,6 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
     );
   }
 
-  // ── No Session ──
-  Widget _buildNoSession() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.danger.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.warning_amber_rounded,
-                color: AppColors.danger, size: 48),
-          ),
-          const SizedBox(height: 20),
-          const Text('No Active Session',
-              style: TextStyle(
-                  color: AppColors.text, fontSize: 20, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          const Text('Create a quiz first to start a session.',
-              style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
-        ],
-      ),
-    );
-  }
 }
 
 // ─── PIN Digit ────────────────────────────────────────────────────────────────

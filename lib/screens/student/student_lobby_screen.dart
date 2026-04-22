@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
 import 'package:quizz_app/constants/app_colors.dart';
 import '../../providers/game_provider.dart';
+import '../../widgets/fallback_state_screen.dart';
 
 class StudentLobbyScreen extends StatefulWidget {
   final String pin;
@@ -27,15 +28,26 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
     final session = provider.session;
     final currentQuestion = provider.currentQuestion;
 
+    final isJoining = provider.currentPin != null || provider.currentStudentName != null;
+
     if (session == null) {
-      return Scaffold(
-        backgroundColor: AppColors.bg,
-        body: Center(
-          child: Text(
-            'Session not found. Invalid PIN?',
-            style: TextStyle(color: AppColors.textMuted),
-          ),
-        ),
+      if (isJoining) {
+        return const FallbackStateScreen(
+          icon: Icons.sync_rounded,
+          title: 'Joining Session',
+          message: 'Please wait while we load your game.',
+          isLoading: true,
+        );
+      }
+
+      return const FallbackStateScreen(
+        icon: Icons.vpn_key_rounded,
+        title: 'Session Not Found',
+        message: 'That PIN no longer has an active session. Join again with a valid code.',
+        primaryLabel: 'Join Again',
+        primaryRoute: AppRoutes.studentJoin,
+        secondaryLabel: 'Go Home',
+        secondaryRoute: AppRoutes.home,
       );
     }
 

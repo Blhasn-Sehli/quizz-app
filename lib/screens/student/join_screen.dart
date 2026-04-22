@@ -104,7 +104,7 @@ class _JoinScreenState extends State<JoinScreen>
     try {
       await provider.studentJoin(pin, name);
       if (mounted) {
-        context.go(AppRoutes.studentLobby, extra: {'pin': pin, 'name': name});
+        context.go(AppRoutes.studentLobbyWithParams(pin: pin, name: name));
       }
     } catch (e) {
       setState(() {

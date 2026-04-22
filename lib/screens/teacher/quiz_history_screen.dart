@@ -161,7 +161,13 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       surfaceTintColor: Colors.transparent,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textSub),
-        onPressed: () => context.pop(),
+        onPressed: () {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go(AppRoutes.quizCreator);
+          }
+        },
       ),
       title: const Text(
         'My Quizzes',

@@ -132,9 +132,11 @@ final GoRouter _router = GoRouter(
       path: AppRoutes.studentLobby,
       builder: (BuildContext context, GoRouterState state) {
         final args = state.extra as Map<String, String>?;
+        final queryPin = state.uri.queryParameters['pin'];
+        final queryName = state.uri.queryParameters['name'];
         return StudentLobbyScreen(
-          pin: args?['pin'] ?? '',
-          name: args?['name'] ?? '',
+          pin: queryPin ?? args?['pin'] ?? '',
+          name: queryName ?? args?['name'] ?? '',
         );
       },
     ),

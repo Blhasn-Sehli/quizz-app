@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
 import 'package:quizz_app/constants/app_colors.dart';
 import '../../providers/game_provider.dart';
+import '../../widgets/fallback_state_screen.dart';
 
 class StudentLeaderboardScreen extends StatefulWidget {
   const StudentLeaderboardScreen({Key? key}) : super(key: key);
@@ -57,13 +58,28 @@ class _StudentLeaderboardScreenState
     final provider = Provider.of<GameProvider>(context);
     final session = provider.session;
     final isEnded = provider.isGameEnded;
+    final isJoiningOrSyncing = provider.currentPin != null || provider.currentStudentName != null;
 
     _tryNavigate(provider);
 
     if (session == null) {
-      return const Scaffold(
-        backgroundColor: AppColors.bg,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      if (isJoiningOrSyncing) {
+        return const FallbackStateScreen(
+          icon: Icons.sync_rounded,
+          title: 'Loading Leaderboard',
+          message: 'We are syncing the latest game results.',
+          isLoading: true,
+        );
+      }
+
+      return const FallbackStateScreen(
+        icon: Icons.leaderboard_rounded,
+        title: 'Leaderboard Unavailable',
+        message: 'The game session is no longer available. Join again to continue.',
+        primaryLabel: 'Join Again',
+        primaryRoute: AppRoutes.studentJoin,
+        secondaryLabel: 'Go Home',
+        secondaryRoute: AppRoutes.home,
       );
     }
 

@@ -5,6 +5,7 @@ import '../../routes/app_routes.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
 import '../../widgets/answer_button.dart';
+import '../../widgets/fallback_state_screen.dart';
 
 class QuestionScreen extends StatefulWidget {
   const QuestionScreen({Key? key}) : super(key: key);
@@ -14,25 +15,25 @@ class QuestionScreen extends StatefulWidget {
 }
 
 class _QuestionScreenState extends State<QuestionScreen> {
-  dynamic _selectedAnswer;
   final TextEditingController _textAnswerController = TextEditingController();
-  bool _answerLocked = false;
-  String? _resultMessage; // 'correct', 'wrong', 'timeout'
-  int? _pointsEarned;
-  int? _lastQuestionIndex;
-  String? _lastQuestionState;
-  Timer? _navigationTimer;
-  bool _fallbackNavigationQueued = false;
 
-  // ✅ Track reveal handling to prevent duplicate setState in build()
-  bool _revealHandled = false;
+  dynamic _selectedAnswer;
+  bool _answerLocked = false;
+  String? _resultMessage;
+  int? _pointsEarned;
+  Timer? _navigationTimer;
+
+  // Track the last question index and state we have already processed,
+  // so _syncWithProvider only reacts to ACTUAL changes, not every rebuild.
+  int? _shownQuestionIndex;
+  String? _shownQuestionState;
 
   @override
   void initState() {
     super.initState();
     final provider = Provider.of<GameProvider>(context, listen: false);
-    _lastQuestionIndex = provider.currentQuestionIndex;
-    _lastQuestionState = provider.questionState;
+    _shownQuestionIndex = provider.currentQuestionIndex;
+    _shownQuestionState = provider.questionState;
   }
 
   @override
@@ -42,83 +43,101 @@ class _QuestionScreenState extends State<QuestionScreen> {
     super.dispose();
   }
 
-  // ✅ This now correctly resets state for every new question
-  void _checkAndResetIfNeeded(GameProvider provider) {
-    final currentIndex = provider.currentQuestionIndex;
-    final currentState = provider.questionState;
+  // Pure read — compares current provider values against what we last
+  // processed and schedules side-effects via addPostFrameCallback.
+  // Never calls setState directly.
+  void _syncWithProvider(GameProvider provider) {
+    final newIndex = provider.currentQuestionIndex;
+    final newState = provider.questionState;
 
-    final questionChanged = currentIndex != _lastQuestionIndex;
-    final stateResetToAnswering =
-        currentState == 'answering' && _lastQuestionState == 'revealed';
+    final indexChanged = newIndex != _shownQuestionIndex;
+    final backToAnswering =
+        newState == 'answering' && _shownQuestionState == 'revealed';
+    final justRevealed =
+        newState == 'revealed' && _shownQuestionState != 'revealed';
 
-    if (questionChanged || stateResetToAnswering) {
-      _navigationTimer?.cancel();
-      _navigationTimer = null;
-
-      // ✅ Use addPostFrameCallback to avoid setState during build
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          setState(() {
-            _selectedAnswer = null;
-            _answerLocked = false;
-            _resultMessage = null;
-            _pointsEarned = null;
-            _revealHandled = false; // ✅ Reset reveal guard
-            _textAnswerController.clear();
-          });
-        }
-      });
-
-      _lastQuestionIndex = currentIndex;
-      _lastQuestionState = currentState;
+    if (indexChanged || backToAnswering) {
+      // A new question started — update tracking first so we don't
+      // trigger this branch again on the very next rebuild.
+      _shownQuestionIndex = newIndex;
+      _shownQuestionState = newState;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onNewQuestion());
+      return;
     }
+
+    if (justRevealed) {
+      _shownQuestionState = newState;
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _onReveal(provider));
+      return;
+    }
+
+    // Timer tick or other innocuous update — just keep tracking in sync.
+    _shownQuestionIndex = newIndex;
+    _shownQuestionState = newState;
   }
 
-  // ✅ Handle reveal OUTSIDE build() using postFrameCallback
-  void _handleReveal(GameProvider provider, int timeRemaining, int basePoints) {
-    if (_revealHandled) return; // ✅ Prevent duplicate handling
-    _revealHandled = true;
+  void _onNewQuestion() {
+    if (!mounted) return;
+    _navigationTimer?.cancel();
+    _navigationTimer = null;
+    setState(() {
+      _selectedAnswer = null;
+      _answerLocked = false;
+      _resultMessage = null;
+      _pointsEarned = null;
+      _textAnswerController.clear();
+    });
+  }
+
+  void _onReveal(GameProvider provider) {
+    if (!mounted) return;
+    if (_resultMessage != null) return; // already showing result
+
+    final question = provider.currentQuestion;
+
+    // For text questions pick up whatever the student typed even if they
+    // didn't press Submit before time ran out.
+    dynamic effectiveAnswer = _selectedAnswer;
+    if (effectiveAnswer == null && question?.type.name == 'text') {
+      final typed = _textAnswerController.text.trim();
+      if (typed.isNotEmpty) effectiveAnswer = typed;
+    }
 
     String result;
     int points;
 
-    if (_selectedAnswer == null || (_selectedAnswer is String && (_selectedAnswer as String).isEmpty)) {
+    if (effectiveAnswer == null ||
+        (effectiveAnswer is String && effectiveAnswer.isEmpty)) {
       result = 'timeout';
       points = 0;
     } else {
-      final isCorrect = provider.currentQuestion?.isAnswerCorrect(_selectedAnswer) ?? false;
-      final timeBonus = timeRemaining * 10;
-      points = isCorrect ? (basePoints + timeBonus) : 0;
+      final isCorrect = question?.isAnswerCorrect(effectiveAnswer) ?? false;
+      points = isCorrect ? question!.points : 0;
       result = isCorrect ? 'correct' : 'wrong';
     }
 
-    // ✅ Safe setState via postFrameCallback (not inside build)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _resultMessage = result;
-          _pointsEarned = points;
-        });
+    setState(() {
+      _resultMessage = result;
+      _pointsEarned = points;
+      _answerLocked = true;
+    });
 
-        // ✅ Navigate after 3 seconds
-        _navigationTimer?.cancel();
-        _navigationTimer = Timer(const Duration(seconds: 3), () {
-          if (mounted) {
-            GoRouter.of(context).go(AppRoutes.studentLeaderboard);
-          }
-        });
-      }
+    _navigationTimer?.cancel();
+    _navigationTimer = Timer(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      GoRouter.of(context).go(AppRoutes.studentLeaderboard);
     });
   }
 
   void _handleAnswer(dynamic answer) {
-    if (_answerLocked) return;
+    if (_answerLocked || !mounted) return;
     setState(() {
       _answerLocked = true;
       _selectedAnswer = answer;
     });
-    final provider = Provider.of<GameProvider>(context, listen: false);
-    provider.submitStudentAnswer(answer);
+    Provider.of<GameProvider>(context, listen: false)
+        .submitStudentAnswer(answer);
   }
 
   @override
@@ -127,62 +146,49 @@ class _QuestionScreenState extends State<QuestionScreen> {
     final question = provider.currentQuestion;
     final session = provider.session;
 
+    // Sync — read only, side-effects deferred to postFrameCallback
+    _syncWithProvider(provider);
+
     if (session == null) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF0D1B2A),
-        body: Center(
-          child: Text('No active question',
-              style: TextStyle(color: Colors.white)),
-        ),
+      return const FallbackStateScreen(
+        icon: Icons.sync_rounded,
+        title: 'Loading Question',
+        message: 'Syncing your game. Please wait.',
+        isLoading: true,
+      );
+    }
+
+    if (provider.isGameEnded && _resultMessage == null) {
+      return const FallbackStateScreen(
+        icon: Icons.emoji_events_rounded,
+        title: 'Game Finished',
+        message: 'Taking you to the final leaderboard.',
+        isLoading: true,
       );
     }
 
     if (question == null) {
-      if (!_fallbackNavigationQueued) {
-        _fallbackNavigationQueued = true;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          final state = provider.questionState;
-          if (provider.isGameEnded || state == 'ended' || state == 'revealed') {
-            context.go(AppRoutes.studentLeaderboard);
-          } else {
-            context.go(AppRoutes.studentLobby);
-          }
-        });
-      }
-
-      return const Scaffold(
-        backgroundColor: Color(0xFF0D1B2A),
-        body: Center(
-          child: Text(
-            'Syncing game state...',
-            style: TextStyle(color: Colors.white70),
-          ),
-        ),
+      return const FallbackStateScreen(
+        icon: Icons.sync_rounded,
+        title: 'Loading Question',
+        message: 'The next question is on its way.',
+        isLoading: true,
       );
     }
 
     final options = question.options ?? const <String>[];
-
     final total = session.quiz.questions.length;
     final current = provider.currentQuestionIndex + 1;
     final timeRemaining = provider.timeRemaining;
     final questionState = provider.questionState;
     final correctIndex = provider.correctAnswer;
 
-    final isRevealed = questionState == 'revealed';
+    final isRevealed = questionState == 'revealed' || _resultMessage != null;
     final isAnswering = !isRevealed &&
+        !_answerLocked &&
         provider.isGameStarted &&
         timeRemaining > 0 &&
         (questionState == 'answering' || questionState == null);
-
-    // ✅ Check for question reset FIRST (before reveal handling)
-    _checkAndResetIfNeeded(provider);
-
-    // ✅ Handle reveal safely (guarded by _revealHandled flag)
-    if (isRevealed && !_revealHandled) {
-      _handleReveal(provider, timeRemaining, question.points);
-    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D1B2A),
@@ -239,46 +245,45 @@ class _QuestionScreenState extends State<QuestionScreen> {
               ),
               const SizedBox(height: 30),
 
-              // Answer buttons
+              // Answer area
               Expanded(
                 child: question.type.name == 'text'
-                    ? _buildTextAnswerInput(isRevealed, isAnswering)
+                    ? _buildTextInput(isAnswering, isRevealed, question)
                     : options.isEmpty
                         ? const Center(
                             child: Text(
-                              'Waiting for question options...',
-                              style: TextStyle(color: Colors.white70, fontSize: 14),
+                              'Waiting for options...',
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 14),
                             ),
                           )
                         : Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(options.length, (index) {
-                              final isSelected = _selectedAnswer == index;
-                              final isCorrectAnswer = correctIndex == index;
-
+                            children: List.generate(options.length, (i) {
                               return AnswerButton(
-                                text: options[index],
-                                index: index,
-                                isSelected: isSelected,
-                                isCorrect: isCorrectAnswer,
+                                text: options[i],
+                                index: i,
+                                isSelected: _selectedAnswer == i,
+                                isCorrect: correctIndex == i,
                                 showResult: isRevealed,
                                 isEnabled: !_answerLocked && isAnswering,
-                                onPressed: () => _handleAnswer(index),
+                                onPressed: () => _handleAnswer(i),
                               );
                             }),
                           ),
               ),
 
-              // Result message
-              if (_resultMessage != null)
+              // Result banner
+              if (_resultMessage != null) ...[
+                const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: _resultMessage == 'correct'
-                        ? Colors.green[700]?.withAlpha((0.8 * 255).round())
+                        ? Colors.green[700]
                         : _resultMessage == 'wrong'
-                            ? Colors.red[700]?.withAlpha((0.8 * 255).round())
-                            : Colors.grey[700]?.withAlpha((0.8 * 255).round()),
+                            ? Colors.red[700]
+                            : Colors.grey[700],
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -298,8 +303,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
                         _resultMessage == 'correct'
                             ? 'Correct! +$_pointsEarned pts'
                             : _resultMessage == 'wrong'
-                                ? 'Wrong! 0 pts'
-                                : 'Too slow!',
+                                ? 'Wrong answer'
+                                : "Time's up!",
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -309,16 +314,17 @@ class _QuestionScreenState extends State<QuestionScreen> {
                     ],
                   ),
                 ),
+              ],
 
-              // Waiting spinner (answer locked but not revealed yet)
-              if (_answerLocked && !isRevealed && _resultMessage == null) ...[
-                const SizedBox(height: 10),
+              // Waiting spinner
+              if (_answerLocked && _resultMessage == null) ...[
+                const SizedBox(height: 12),
                 const Center(
                   child: Column(
                     children: [
                       SizedBox(
-                        width: 24,
-                        height: 24,
+                        width: 22,
+                        height: 22,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor:
@@ -327,8 +333,9 @@ class _QuestionScreenState extends State<QuestionScreen> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'Answer locked! Waiting for reveal...',
-                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                        'Answer locked! Waiting for results...',
+                        style:
+                            TextStyle(color: Colors.white70, fontSize: 13),
                       ),
                     ],
                   ),
@@ -341,58 +348,103 @@ class _QuestionScreenState extends State<QuestionScreen> {
     );
   }
 
-  Widget _buildTextAnswerInput(bool isRevealed, bool isAnswering) {
+  Widget _buildTextInput(bool isAnswering, bool isRevealed, dynamic question) {
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: _textAnswerController,
-              enabled: !_answerLocked && isAnswering,
-              style: const TextStyle(color: Colors.white, fontSize: 18),
-              textAlign: TextAlign.center,
-              decoration: InputDecoration(
-                hintText: 'Type your answer here...',
-                hintStyle: const TextStyle(color: Colors.white54),
-                filled: true,
-                fillColor: Colors.white.withAlpha((0.1 * 255).round()),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              ),
-              onSubmitted: (val) {
-                if (!_answerLocked && isAnswering && val.trim().isNotEmpty) {
-                  _handleAnswer(val.trim());
-                }
-              },
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: (!_answerLocked && isAnswering)
-                  ? () {
-                      final val = _textAnswerController.text.trim();
-                      if (val.isNotEmpty) {
-                        _handleAnswer(val);
-                      }
-                    }
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                disabledBackgroundColor: Colors.grey[800],
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                shape: RoundedRectangleBorder(
+            if (_answerLocked && _selectedAnswer != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha((0.1 * 255).round()),
                   borderRadius: BorderRadius.circular(16),
                 ),
+                child: Text(
+                  'Your answer: "$_selectedAnswer"',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                      fontStyle: FontStyle.italic),
+                ),
+              )
+            else
+              TextField(
+                controller: _textAnswerController,
+                // KEY FIX: only disable when truly locked or revealed.
+                // The timer ticking does NOT disable the field.
+                enabled: !_answerLocked && !isRevealed,
+                autofocus: true,
+                style: const TextStyle(color: Colors.white, fontSize: 18),
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                  hintText: isRevealed ? 'Time is up' : 'Type your answer...',
+                  hintStyle: const TextStyle(color: Colors.white54),
+                  filled: true,
+                  fillColor: Colors.white.withAlpha((0.1 * 255).round()),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 16),
+                ),
+                onSubmitted: (val) {
+                  final trimmed = val.trim();
+                  if (trimmed.isNotEmpty && !_answerLocked && !isRevealed) {
+                    _handleAnswer(trimmed);
+                  }
+                },
               ),
-              child: const Text(
-                'Submit Answer',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            const SizedBox(height: 16),
+            if (!_answerLocked && !isRevealed)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final val = _textAnswerController.text.trim();
+                    if (val.isNotEmpty) _handleAnswer(val);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'Submit Answer',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
+                ),
               ),
-            ),
+            if (isRevealed && question?.correctAnswerText != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.green.withAlpha((0.2 * 255).round()),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: Colors.green.withAlpha((0.5 * 255).round())),
+                ),
+                child: Text(
+                  'Keywords: ${question!.correctAnswerText}',
+                  style: const TextStyle(
+                      color: Colors.greenAccent, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -400,9 +452,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
   }
 
   Widget _buildTimerBar(int timeRemaining, int totalTime) {
-    // ✅ Guard against division by zero
-    final progress = totalTime > 0 ? (timeRemaining / totalTime).clamp(0.0, 1.0) : 0.0;
-
+    final progress =
+        totalTime > 0 ? (timeRemaining / totalTime).clamp(0.0, 1.0) : 0.0;
     return Container(
       height: 12,
       decoration: BoxDecoration(
@@ -414,7 +465,6 @@ class _QuestionScreenState extends State<QuestionScreen> {
         alignment: Alignment.centerLeft,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          height: 12,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: progress > 0.5
@@ -422,21 +472,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
                   : progress > 0.25
                       ? [Colors.orange[400]!, Colors.orange[600]!]
                       : [Colors.red[400]!, Colors.red[600]!],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
             ),
             borderRadius: BorderRadius.circular(6),
-            boxShadow: [
-              BoxShadow(
-                color: progress > 0.5
-                    ? Colors.green.withAlpha((0.5 * 255).round())
-                    : progress > 0.25
-                        ? Colors.orange.withAlpha((0.5 * 255).round())
-                        : Colors.red.withAlpha((0.5 * 255).round()),
-                blurRadius: 8,
-                spreadRadius: 2,
-              ),
-            ],
           ),
         ),
       ),

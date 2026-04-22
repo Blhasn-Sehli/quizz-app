@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
 import '../../providers/game_provider.dart';
 import '../../widgets/timer_bar.dart';
+import '../../widgets/fallback_state_screen.dart';
 import '../../models/question.dart';
 import '../../models/game_session.dart';
 
@@ -23,7 +24,11 @@ class _HostGameScreenState extends State<HostGameScreen> {
     final session = provider.session;
     final question = provider.currentQuestion;
 
-    if (session != null && session.gameEnded && !_navigationTriggered) {
+    if (session != null &&
+      provider.currentPin != null &&
+      session.pin == provider.currentPin &&
+      session.gameEnded &&
+      !_navigationTriggered) {
       _navigationTriggered = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -32,15 +37,26 @@ class _HostGameScreenState extends State<HostGameScreen> {
       });
     }
 
+    final isLaunching = provider.currentPin != null || provider.isGameStarted || provider.questionState != null;
+
     if (session == null || question == null) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF0D1B2A),
-        body: Center(
-          child: Text(
-            'No active game',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
+      if (isLaunching) {
+        return const FallbackStateScreen(
+          icon: Icons.sports_esports_rounded,
+          title: 'Starting Game',
+          message: 'Your session is being prepared. This usually takes a moment on web.',
+          isLoading: true,
+        );
+      }
+
+      return const FallbackStateScreen(
+        icon: Icons.sports_esports_rounded,
+        title: 'No Active Game',
+        message: 'There is no running game right now. Go back to the quiz creator to start one.',
+        primaryLabel: 'Back to Quiz Creator',
+        primaryRoute: AppRoutes.quizCreator,
+        secondaryLabel: 'Go Home',
+        secondaryRoute: AppRoutes.home,
       );
     }
 
@@ -371,7 +387,11 @@ class _HostGameScreenState extends State<HostGameScreen> {
       itemBuilder: (context, index) {
         final student = answeredStudents[index];
         final answer = student.currentAnswer.toString();
-        final isCorrect = student.isCorrect ?? false;
+        final isCorrect = student.isCorrect ?? question.isAnswerCorrect(student.currentAnswer);
+        final hasAnswerText = answer.trim().isNotEmpty;
+        final statusColor = isCorrect ? Colors.green : Colors.red;
+        final statusIcon = isCorrect ? Icons.check_circle : Icons.cancel;
+        final avatarLabel = _initials(student.name);
 
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
@@ -382,16 +402,16 @@ class _HostGameScreenState extends State<HostGameScreen> {
                 : Colors.red.withAlpha((0.2 * 255).round()),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isCorrect ? Colors.green : Colors.red,
+              color: statusColor,
               width: 1,
             ),
           ),
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: isCorrect ? Colors.green : Colors.red,
+                backgroundColor: statusColor,
                 child: Text(
-                  student.name.split(' ').last[0].toUpperCase(),
+                  avatarLabel,
                   style: const TextStyle(color: Colors.white),
                 ),
               ),
@@ -409,7 +429,7 @@ class _HostGameScreenState extends State<HostGameScreen> {
                       ),
                     ),
                     Text(
-                      '"$answer"',
+                      hasAnswerText ? '"$answer"' : '"(empty)"',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 14,
@@ -419,14 +439,29 @@ class _HostGameScreenState extends State<HostGameScreen> {
                 ),
               ),
               Icon(
-                isCorrect ? Icons.check_circle : Icons.cancel,
-                color: isCorrect ? Colors.green : Colors.red,
+                statusIcon,
+                color: statusColor,
               ),
             ],
           ),
         );
       },
     );
+  }
+
+  String _initials(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return '?';
+
+    final parts = trimmed.split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) {
+      return parts.first[0].toUpperCase();
+    }
+
+    final first = parts.first[0];
+    final last = parts.last[0];
+    return '$first$last'.toUpperCase();
   }
 
   Widget _buildAnswerReview(BuildContext context, Question question, GameSession session, GameProvider provider) {
