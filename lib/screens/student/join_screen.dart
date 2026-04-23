@@ -75,6 +75,27 @@ class _JoinScreenState extends State<JoinScreen>
     setState(() => _pinError = null);
   }
 
+  /// Called when the user pastes via Ctrl+V / Cmd+V inside any digit box.
+  /// Reads the full clipboard text, extracts digits, and distributes them
+  /// across all 6 boxes — bypassing the per-box LengthLimitingTextInputFormatter.
+  Future<void> _onPasteToPin() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text ?? '';
+    final digits = text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty || !mounted) return;
+
+    for (int j = 0; j < 6; j++) {
+      _digitControllers[j].text = j < digits.length ? digits[j] : '';
+    }
+    setState(() => _pinError = null);
+
+    if (digits.length >= 6) {
+      _nameFocus.requestFocus();
+    } else {
+      _digitFocusNodes[digits.length.clamp(0, 5)].requestFocus();
+    }
+  }
+
   void _onDigitBackspace(int index) {
     if (_digitControllers[index].text.isEmpty && index > 0) {
       _digitControllers[index - 1].clear();
@@ -357,6 +378,7 @@ class _JoinScreenState extends State<JoinScreen>
               isFilled: isFilled,
               onChanged: (v) => _onDigitChanged(v, i),
               onBackspace: () => _onDigitBackspace(i),
+              onPaste: _onPasteToPin,
             ),
           ),
         );
@@ -494,6 +516,8 @@ class _DigitBox extends StatefulWidget {
   final bool isFilled;
   final ValueChanged<String> onChanged;
   final VoidCallback onBackspace;
+  /// Called when the user pastes via Ctrl+V / Cmd+V / Meta+V.
+  final Future<void> Function()? onPaste;
 
   const _DigitBox({
     required this.controller,
@@ -502,6 +526,7 @@ class _DigitBox extends StatefulWidget {
     required this.isFilled,
     required this.onChanged,
     required this.onBackspace,
+    this.onPaste,
   });
 
   @override
@@ -558,6 +583,13 @@ class _DigitBoxState extends State<_DigitBox> {
           if (event is KeyDownEvent &&
               event.logicalKey == LogicalKeyboardKey.backspace) {
             widget.onBackspace();
+          }
+          // Intercept Ctrl+V (Windows/Linux) and Cmd+V (macOS/web)
+          if (event is KeyDownEvent &&
+              (HardwareKeyboard.instance.isControlPressed ||
+               HardwareKeyboard.instance.isMetaPressed) &&
+              event.logicalKey == LogicalKeyboardKey.keyV) {
+            widget.onPaste?.call();
           }
         },
         child: TextField(

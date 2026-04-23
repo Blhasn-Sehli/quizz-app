@@ -24,17 +24,28 @@ class _HostGameScreenState extends State<HostGameScreen> {
     final session = provider.session;
     final question = provider.currentQuestion;
 
+    // ── GAME ENDED: navigate to leaderboard FIRST, before any null checks ──
+    // When gameEnded=true, Firestore sets questionState='ended' and the
+    // currentQuestionIndex may exceed the quiz length, making currentQuestion
+    // return null. We must check gameEnded before the session/question guard.
     if (session != null &&
-      provider.currentPin != null &&
-      session.pin == provider.currentPin &&
-      session.gameEnded &&
-      !_navigationTriggered) {
+        provider.currentPin != null &&
+        session.pin == provider.currentPin &&
+        session.gameEnded &&
+        !_navigationTriggered) {
       _navigationTriggered = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           GoRouter.of(context).go(AppRoutes.teacherLeaderboard);
         }
       });
+      // Show a brief loading state while the callback fires
+      return const FallbackStateScreen(
+        icon: Icons.emoji_events_rounded,
+        title: 'Game Over!',
+        message: 'Loading final leaderboard...',
+        isLoading: true,
+      );
     }
 
     final isLaunching = provider.currentPin != null || provider.isGameStarted || provider.questionState != null;

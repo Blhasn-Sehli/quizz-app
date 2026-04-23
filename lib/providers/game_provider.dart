@@ -165,11 +165,10 @@ class GameProvider extends ChangeNotifier {
       }
     }
 
-    // FIX: Was 3 seconds — students were being kicked to leaderboard before
-    // they could even read their result. 7 seconds gives them time to see
-    // correct/wrong feedback AND the leaderboard transition on their device.
-    // The teacher can still manually advance early via "Next Question" button.
-    _nextQuestionTimer = Timer(const Duration(seconds: 3000), () {
+    // Students get 7 seconds to read their correct/wrong feedback before
+    // the host auto-advances. The teacher can still advance early via
+    // the "Next Question" button.
+    _nextQuestionTimer = Timer(const Duration(seconds: 7), () {
       if (_isDisposed) return;
       nextQuestion();
     });
