@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
 import '../../providers/game_provider.dart';
-import '../../constants/app_colors.dart';
+import '../../constants/app_theme.dart';
 
 class JoinScreen extends StatefulWidget {
   const JoinScreen({Key? key}) : super(key: key);
@@ -139,11 +139,10 @@ class _JoinScreenState extends State<JoinScreen>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isWide = size.width > 700;
-
+    final t = context.tokens;
+    final isWide = MediaQuery.of(context).size.width > 700;
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: t.bg,
       body: Stack(
         children: [
           // Background decorative blobs
@@ -189,7 +188,7 @@ class _JoinScreenState extends State<JoinScreen>
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.primary.withOpacity(0.18),
+                  context.tokens.primary.withOpacity(0.15),
                   Colors.transparent,
                 ],
               ),
@@ -207,7 +206,7 @@ class _JoinScreenState extends State<JoinScreen>
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.accent.withOpacity(0.15),
+                  context.tokens.accent.withOpacity(0.12),
                   Colors.transparent,
                 ],
               ),
@@ -225,7 +224,7 @@ class _JoinScreenState extends State<JoinScreen>
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.primaryLight.withOpacity(0.07),
+                  context.tokens.primaryGlow.withOpacity(0.06),
                   Colors.transparent,
                 ],
               ),
@@ -240,12 +239,12 @@ class _JoinScreenState extends State<JoinScreen>
   Widget _buildCard(bool isWide) {
     return Container(
       decoration: BoxDecoration(
-        gradient: AppColors.gradCard,
+        color: context.tokens.surface,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.tokens.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.35),
+            color: Colors.black.withOpacity(context.tokens.isDark ? 0.30 : 0.10),
             blurRadius: 40,
             offset: const Offset(0, 16),
           ),
@@ -282,11 +281,11 @@ class _JoinScreenState extends State<JoinScreen>
             _buildJoinButton(),
             const SizedBox(height: 20),
             // Footer hint
-            const Text(
+            Text(
               'Ask your teacher for the PIN to join the session',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: AppColors.textMuted,
+                color: context.tokens.textMuted,
                 fontSize: 12,
               ),
             ),
@@ -305,11 +304,15 @@ class _JoinScreenState extends State<JoinScreen>
           width: 72,
           height: 72,
           decoration: BoxDecoration(
-            gradient: AppColors.gradBtn,
+            gradient: LinearGradient(
+              colors: [context.tokens.primaryDim, context.tokens.primary],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.4),
+                color: context.tokens.primary.withOpacity(0.35),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -322,20 +325,20 @@ class _JoinScreenState extends State<JoinScreen>
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'Join a Game',
           style: TextStyle(
-            color: AppColors.text,
+            color: context.tokens.text,
             fontSize: 26,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Enter your PIN and nickname to play',
           style: TextStyle(
-            color: AppColors.textMuted,
+            color: context.tokens.textMuted,
             fontSize: 13,
           ),
         ),
@@ -347,8 +350,8 @@ class _JoinScreenState extends State<JoinScreen>
   Widget _buildSectionLabel(String label) {
     return Text(
       label.toUpperCase(),
-      style: const TextStyle(
-        color: AppColors.primaryLight,
+      style: TextStyle(
+        color: context.tokens.primaryGlow,
         fontSize: 11,
         fontWeight: FontWeight.w700,
         letterSpacing: 1.2,
@@ -391,20 +394,20 @@ class _JoinScreenState extends State<JoinScreen>
     return TextField(
       controller: _nameController,
       focusNode: _nameFocus,
-      style: const TextStyle(
-          color: AppColors.text, fontSize: 15, fontWeight: FontWeight.w600),
-      cursorColor: AppColors.primary,
+      style: TextStyle(
+          color: context.tokens.text, fontSize: 15, fontWeight: FontWeight.w600),
+      cursorColor: context.tokens.primary,
       textCapitalization: TextCapitalization.words,
       textInputAction: TextInputAction.done,
       onSubmitted: (_) => _validateAndJoin(),
       onChanged: (_) => setState(() => _nameError = null),
       decoration: InputDecoration(
         hintText: 'e.g. Alex, SuperPlayer…',
-        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
-        prefixIcon: const Icon(Icons.person_rounded,
-            color: AppColors.primaryLight, size: 20),
+        hintStyle: TextStyle(color: context.tokens.textMuted, fontSize: 14),
+        prefixIcon: Icon(Icons.person_rounded,
+            color: context.tokens.primaryGlow, size: 20),
         filled: true,
-        fillColor: AppColors.surfaceHigh,
+        fillColor: context.tokens.surfaceHigh,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -412,14 +415,14 @@ class _JoinScreenState extends State<JoinScreen>
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
-            color: _nameError != null ? AppColors.danger : AppColors.border,
+            color: _nameError != null ? context.tokens.danger : context.tokens.border,
             width: _nameError != null ? 2 : 1,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
-            color: _nameError != null ? AppColors.danger : AppColors.primary,
+            color: _nameError != null ? context.tokens.danger : context.tokens.primary,
             width: 2,
           ),
         ),
@@ -433,14 +436,14 @@ class _JoinScreenState extends State<JoinScreen>
   Widget _buildErrorText(String msg) {
     return Row(
       children: [
-        const Icon(Icons.error_outline_rounded,
-            color: AppColors.danger, size: 14),
+        Icon(Icons.error_outline_rounded,
+            color: context.tokens.danger, size: 14),
         const SizedBox(width: 5),
         Expanded(
           child: Text(
             msg,
-            style: const TextStyle(
-                color: AppColors.danger,
+            style: TextStyle(
+                color: context.tokens.danger,
                 fontSize: 12,
                 fontWeight: FontWeight.w500),
           ),
@@ -454,18 +457,22 @@ class _JoinScreenState extends State<JoinScreen>
     return Container(
       height: 54,
       decoration: BoxDecoration(
-        gradient: _isLoading ? null : AppColors.gradBtnGreen,
-        color: _isLoading ? AppColors.surfaceHigh : null,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: _isLoading
-            ? null
-            : [
-                BoxShadow(
-                  color: AppColors.success.withOpacity(0.4),
-                  blurRadius: 18,
-                  offset: const Offset(0, 7),
-                ),
-              ],
+        gradient: _isLoading ? null : LinearGradient(
+            colors: [context.tokens.success.withOpacity(0.85), context.tokens.success],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          color: _isLoading ? context.tokens.surfaceHigh : null,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: _isLoading
+              ? null
+              : [
+                  BoxShadow(
+                    color: context.tokens.success.withOpacity(0.35),
+                    blurRadius: 18,
+                    offset: const Offset(0, 7),
+                  ),
+                ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -546,17 +553,18 @@ class _DigitBoxState extends State<_DigitBox> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     final borderColor = widget.hasError
-        ? AppColors.danger
+        ? t.danger
         : _focused
-            ? AppColors.primary
+            ? t.primary
             : widget.isFilled
-                ? AppColors.primaryLight.withOpacity(0.6)
-                : AppColors.border;
+                ? t.primaryGlow.withOpacity(0.6)
+                : t.border;
 
     final bgColor = widget.isFilled
-        ? AppColors.primary.withOpacity(0.12)
-        : AppColors.surfaceHigh;
+        ? t.primary.withOpacity(0.12)
+        : t.surfaceHigh;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
@@ -570,7 +578,7 @@ class _DigitBoxState extends State<_DigitBox> {
         boxShadow: _focused
             ? [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.25),
+                  color: t.primary.withOpacity(0.25),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -602,11 +610,11 @@ class _DigitBoxState extends State<_DigitBox> {
             LengthLimitingTextInputFormatter(1),
           ],
           style: TextStyle(
-            color: widget.isFilled ? AppColors.primaryLight : AppColors.text,
+            color: widget.isFilled ? t.primaryGlow : t.text,
             fontSize: 22,
             fontWeight: FontWeight.w800,
           ),
-          cursorColor: AppColors.primary,
+          cursorColor: t.primary,
           decoration: const InputDecoration(
             border: InputBorder.none,
             counterText: '',
@@ -614,6 +622,7 @@ class _DigitBoxState extends State<_DigitBox> {
           ),
           onChanged: widget.onChanged,
         ),
+
       ),
     );
   }

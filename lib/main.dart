@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'providers/game_provider.dart';
+import 'providers/theme_provider.dart';
+import 'constants/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'services/firebase_service.dart';
 import 'services/auth_service.dart';
@@ -23,7 +25,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
 
-  // Initialize Firebase
   debugPrint('Starting Firebase initialization...');
   final firebaseService = FirebaseService();
   try {
@@ -41,117 +42,54 @@ final GoRouter _router = GoRouter(
   redirect: (BuildContext context, GoRouterState state) async {
     final location = state.matchedLocation;
 
-    // Legacy route compatibility.
     final legacyTarget = AppRoutes.legacyRedirects[location];
-    if (legacyTarget != null) {
-      return legacyTarget;
-    }
+    if (legacyTarget != null) return legacyTarget;
 
-    // Get current auth state
     final authService = AuthService();
     final isLoggedIn = authService.isLoggedIn;
-    final isGoingToProtectedTeacherRoute =
-        AppRoutes.protectedTeacherRoutes.contains(location);
-    final isGoingToLoginOrRegister =
-        location == AppRoutes.login || location == AppRoutes.register;
+    final isGoingToProtected = AppRoutes.protectedTeacherRoutes.contains(location);
+    final isGoingToAuth = location == AppRoutes.login || location == AppRoutes.register;
 
-    // If going to a protected teacher route and not logged in, redirect to login
-    if (isGoingToProtectedTeacherRoute &&
-        !isGoingToLoginOrRegister &&
-        !isLoggedIn) {
-      return AppRoutes.login;
-    }
+    if (isGoingToProtected && !isGoingToAuth && !isLoggedIn) return AppRoutes.login;
+    if (isGoingToAuth && isLoggedIn) return AppRoutes.quizCreator;
 
-    // If logged in and going to login/register, go to quiz creator
-    if (isGoingToLoginOrRegister && isLoggedIn) {
-      return AppRoutes.quizCreator;
-    }
-
-    // Otherwise, allow the route
     return null;
   },
   routes: <RouteBase>[
-    GoRoute(
-      path: AppRoutes.home,
-      builder: (BuildContext context, GoRouterState state) {
-        return const HomeScreen();
-      },
-    ),
-    // Teacher authentication routes
-    GoRoute(
-      path: AppRoutes.login,
-      builder: (BuildContext context, GoRouterState state) {
-        return const LoginScreen();
-      },
-    ),
-    GoRoute(
-      path: AppRoutes.register,
-      builder: (BuildContext context, GoRouterState state) {
-        return const RegisterScreen();
-      },
-    ),
-    // Teacher routes
-    GoRoute(
-      path: AppRoutes.quizCreator,
-      builder: (BuildContext context, GoRouterState state) {
-        return const QuizCreatorScreen();
-      },
-    ),
-    GoRoute(
-      path: AppRoutes.teacherLobby,
-      builder: (BuildContext context, GoRouterState state) {
-        return const TeacherLobbyScreen();
-      },
-    ),
-    GoRoute(
-      path: AppRoutes.hostGame,
-      builder: (BuildContext context, GoRouterState state) {
-        return const HostGameScreen();
-      },
-    ),
-    GoRoute(
-      path: AppRoutes.teacherLeaderboard,
-      builder: (BuildContext context, GoRouterState state) {
-        return const FinalLeaderboardScreen();
-      },
-    ),
-    GoRoute(
-      path: AppRoutes.quizHistory,
-      builder: (BuildContext context, GoRouterState state) {
-        return const QuizHistoryScreen();
-      },
-    ),
-    // Student routes
-    GoRoute(
-      path: AppRoutes.studentJoin,
-      builder: (BuildContext context, GoRouterState state) {
-        return const JoinScreen();
-      },
-    ),
+    GoRoute(path: AppRoutes.home,
+        builder: (_, __) => const HomeScreen()),
+    GoRoute(path: AppRoutes.login,
+        builder: (_, __) => const LoginScreen()),
+    GoRoute(path: AppRoutes.register,
+        builder: (_, __) => const RegisterScreen()),
+    GoRoute(path: AppRoutes.quizCreator,
+        builder: (_, __) => const QuizCreatorScreen()),
+    GoRoute(path: AppRoutes.teacherLobby,
+        builder: (_, __) => const TeacherLobbyScreen()),
+    GoRoute(path: AppRoutes.hostGame,
+        builder: (_, __) => const HostGameScreen()),
+    GoRoute(path: AppRoutes.teacherLeaderboard,
+        builder: (_, __) => const FinalLeaderboardScreen()),
+    GoRoute(path: AppRoutes.quizHistory,
+        builder: (_, __) => const QuizHistoryScreen()),
+    GoRoute(path: AppRoutes.studentJoin,
+        builder: (_, __) => const JoinScreen()),
     GoRoute(
       path: AppRoutes.studentLobby,
-      builder: (BuildContext context, GoRouterState state) {
+      builder: (_, state) {
         final args = state.extra as Map<String, String>?;
-        final queryPin = state.uri.queryParameters['pin'];
+        final queryPin  = state.uri.queryParameters['pin'];
         final queryName = state.uri.queryParameters['name'];
         return StudentLobbyScreen(
-          pin: queryPin ?? args?['pin'] ?? '',
+          pin:  queryPin  ?? args?['pin']  ?? '',
           name: queryName ?? args?['name'] ?? '',
         );
       },
     ),
-    GoRoute(
-      path: AppRoutes.studentQuestion,
-      builder: (BuildContext context, GoRouterState state) {
-        return const QuestionScreen();
-      },
-    ),
-    GoRoute(
-      path: AppRoutes.studentLeaderboard,
-      builder: (BuildContext context, GoRouterState state) {
-        return const StudentLeaderboardScreen();
-      },
-    ),
+    GoRoute(path: AppRoutes.studentQuestion,
+        builder: (_, __) => const QuestionScreen()),
+    GoRoute(path: AppRoutes.studentLeaderboard,
+        builder: (_, __) => const StudentLeaderboardScreen()),
   ],
 );
 
@@ -160,21 +98,25 @@ class QuizzApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => GameProvider(),
-      child: MaterialApp.router(
-        title: 'QuizzApp',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF0D1B2A),
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF46178F),
-            secondary: Color(0xFF1368CE),
-            surface: Color(0xFF0D1B2A),
-          ),
-        ),
-        routerConfig: _router,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => GameProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (_, themeProvider, __) {
+          return MaterialApp.router(
+            title: 'QuizzApp',
+            debugShowCheckedModeBanner: false,
+            // Smooth animated theme switch — 300 ms on all properties
+            themeAnimationDuration: const Duration(milliseconds: 300),
+            themeAnimationCurve: Curves.easeInOut,
+            theme:      AppTheme.light,
+            darkTheme:  AppTheme.dark,
+            themeMode:  themeProvider.mode,
+            routerConfig: _router,
+          );
+        },
       ),
     );
   }

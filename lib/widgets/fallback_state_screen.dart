@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../routes/app_routes.dart';
-import '../constants/app_colors.dart';
+import '../constants/app_theme.dart';
 
 class FallbackStateScreen extends StatelessWidget {
   final IconData icon;
@@ -28,8 +28,9 @@ class FallbackStateScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: t.bg,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -39,14 +40,14 @@ class FallbackStateScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
-                  gradient: AppColors.gradCard,
+                  color: t.surface,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: t.border),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 24,
-                      offset: const Offset(0, 12),
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 32,
+                      offset: const Offset(0, 16),
                     ),
                   ],
                 ),
@@ -58,8 +59,12 @@ class FallbackStateScreen extends StatelessWidget {
                       height: 76,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: AppColors.gradBtn,
-                        border: Border.all(color: AppColors.border, width: 2),
+                        gradient: LinearGradient(
+                          colors: [t.primaryDim, t.primary],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        border: Border.all(color: t.border, width: 2),
                       ),
                       child: Icon(icon, color: Colors.white, size: 36),
                     ),
@@ -67,29 +72,26 @@ class FallbackStateScreen extends StatelessWidget {
                     Text(
                       title,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.text,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.4,
-                      ),
+                      style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       message,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 14,
-                        height: 1.45,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: t.textMuted,
+                            height: 1.5,
+                          ),
                     ),
                     if (isLoading) ...[
                       const SizedBox(height: 24),
-                      const SizedBox(
+                      SizedBox(
                         width: 28,
                         height: 28,
-                        child: CircularProgressIndicator(strokeWidth: 3),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          color: t.primary,
+                        ),
                       ),
                     ],
                     if (!isLoading) ...[
@@ -153,19 +155,23 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Material(
-      color: filled ? null : AppColors.surfaceHigh,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Ink(
           decoration: BoxDecoration(
-            gradient: filled ? AppColors.gradBtn : null,
-            color: filled ? null : AppColors.surfaceHigh,
+            gradient: filled
+                ? LinearGradient(colors: [t.primaryDim, t.primary],
+                    begin: Alignment.centerLeft, end: Alignment.centerRight)
+                : null,
+            color: filled ? null : t.surfaceHigh,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: filled ? Colors.transparent : AppColors.border,
+              color: filled ? Colors.transparent : t.border,
             ),
           ),
           child: Padding(
@@ -173,14 +179,14 @@ class _ActionButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: filled ? Colors.white : AppColors.text, size: 18),
+                Icon(icon, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     label,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: filled ? Colors.white : AppColors.text,
+                      color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),

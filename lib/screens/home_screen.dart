@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/game_provider.dart';
 import '../services/auth_service.dart';
+import '../constants/app_theme.dart';
+import '../widgets/theme_toggle.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -12,7 +14,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF08080F),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 800;
@@ -47,12 +49,16 @@ class _MobileHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1A0F3E), Color(0xFF0F3460), Color(0xFF0A1628)],
-          stops: [0.0, 0.5, 1.0],
+          colors: [
+            context.tokens.bgDeep,
+            context.tokens.surface,
+            context.tokens.bg,
+          ],
+          stops: const [0.0, 0.5, 1.0],
         ),
       ),
       child: SafeArea(
@@ -68,7 +74,7 @@ class _MobileHero extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF6366F1).withOpacity(0.18),
+                      const Color(0xFF3DA899).withOpacity(0.20),
                       Colors.transparent,
                     ],
                   ),
@@ -84,7 +90,7 @@ class _MobileHero extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF10B981).withOpacity(0.12),
+                      const Color(0xFFF59E0B).withOpacity(0.12),
                       Colors.transparent,
                     ],
                   ),
@@ -140,12 +146,13 @@ class _WebLayout extends StatelessWidget {
 class _WebNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Container(
       height: 64,
       decoration: BoxDecoration(
-        color: const Color(0xFF08080F).withOpacity(0.9),
-        border: const Border(
-          bottom: BorderSide(color: Color(0xFF111124), width: 1),
+        color: t.bg.withOpacity(0.92),
+        border: Border(
+          bottom: BorderSide(color: t.border, width: 1),
         ),
       ),
       child: Center(
@@ -156,21 +163,22 @@ class _WebNav extends StatelessWidget {
             child: Row(
               children: [
                 RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
-                      fontFamily: 'sans-serif',
+                  text: TextSpan(
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.5,
                     ),
                     children: [
-                      TextSpan(text: 'Quiz', style: TextStyle(color: Colors.white)),
-                      TextSpan(text: 'App', style: TextStyle(color: Color(0xFF818CF8))),
+                      TextSpan(text: 'Quiz', style: TextStyle(color: t.text)),
+                      TextSpan(text: 'App', style: TextStyle(color: t.primary)),
                     ],
                   ),
                 ),
                 const Spacer(),
                 _LiveBadge(),
+                const SizedBox(width: 16),
+                const ThemeToggle(),
               ],
             ),
           ),
@@ -185,12 +193,16 @@ class _WebHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1A0F3E), Color(0xFF0F3460), Color(0xFF0A1628)],
-          stops: [0.0, 0.5, 1.0],
+          colors: [
+            context.tokens.bgDeep,
+            context.tokens.surfacePop,
+            context.tokens.surface,
+          ],
+          stops: const [0.0, 0.5, 1.0],
         ),
       ),
       child: Stack(
@@ -202,7 +214,7 @@ class _WebHero extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(colors: [
-                  const Color(0xFF6366F1).withOpacity(0.15),
+                  const Color(0xFF3DA899).withOpacity(0.18),
                   Colors.transparent,
                 ]),
               ),
@@ -240,14 +252,14 @@ class _WebHero extends StatelessWidget {
                               _WebCTAButton(
                                 label: "I'm a Teacher",
                                 emoji: '🎓',
-                                gradient: const [Color(0xFF4F46E5), Color(0xFF7C3AED)],
+                                gradient: const [Color(0xFF226660), Color(0xFF3DA899)],
                                 onTap: () {}, // handled in role section
                               ),
                               const SizedBox(width: 14),
                               _WebCTAButton(
                                 label: "I'm a Student",
                                 emoji: '🎮',
-                                gradient: const [Color(0xFF059669), Color(0xFF10B981)],
+                                gradient: const [Color(0xFFD97706), Color(0xFFF59E0B)],
                                 onTap: () => context.go(AppRoutes.studentJoin),
                               ),
                             ],
@@ -321,9 +333,9 @@ class _WebHeroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF111124),
+        color: context.tokens.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.07)),
+        border: Border.all(color: context.tokens.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,10 +416,10 @@ class _WebStatsBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF111124),
+        color: context.tokens.surface,
         border: Border(
-          top: BorderSide(color: Colors.white.withOpacity(0.06)),
-          bottom: BorderSide(color: Colors.white.withOpacity(0.06)),
+          top: BorderSide(color: context.tokens.border),
+          bottom: BorderSide(color: context.tokens.border),
         ),
       ),
       child: Center(
@@ -745,7 +757,7 @@ class _TeacherButton extends StatelessWidget {
           emoji: '🎓',
           title: "I'm a Teacher",
           subtitle: 'Create & host quizzes',
-          gradientColors: const [Color(0xFF4F46E5), Color(0xFF7C3AED)],
+          gradientColors: const [Color(0xFF226660), Color(0xFF3DA899)],
           onTap: () => isLoggedIn
               ? context.go(AppRoutes.quizCreator)
               : context.go(AppRoutes.login),
@@ -762,7 +774,7 @@ class _StudentButton extends StatelessWidget {
       emoji: '🎮',
       title: "I'm a Student",
       subtitle: 'Join with a PIN code',
-      gradientColors: const [Color(0xFF059669), Color(0xFF10B981)],
+      gradientColors: const [Color(0xFFD97706), Color(0xFFF59E0B)],
       onTap: () => context.go(AppRoutes.studentJoin),
     );
   }
@@ -874,16 +886,19 @@ class _OrDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        children: [
-          Expanded(child: Container(height: 1, color: const Color(0xFF1E1E38))),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Text('or', style: TextStyle(fontSize: 12, color: Color(0xFF555577))),
-          ),
-          Expanded(child: Container(height: 1, color: const Color(0xFF1E1E38))),
-        ],
-      ),
+      child: Builder(builder: (context) {
+        final t = context.tokens;
+        return Row(
+          children: [
+            Expanded(child: Container(height: 1, color: t.border)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text('or', style: TextStyle(fontSize: 12, color: t.textMuted)),
+            ),
+            Expanded(child: Container(height: 1, color: t.border)),
+          ],
+        );
+      }),
     );
   }
 }
