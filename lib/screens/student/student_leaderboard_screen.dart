@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
-import 'package:quizz_app/constants/app_colors.dart';
+import '../../constants/app_theme.dart';
 import '../../providers/game_provider.dart';
 import '../../widgets/fallback_state_screen.dart';
+import '../../widgets/theme_toggle.dart';
 
 class StudentLeaderboardScreen extends StatefulWidget {
   const StudentLeaderboardScreen({Key? key}) : super(key: key);
@@ -56,6 +57,7 @@ class _StudentLeaderboardScreenState
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<GameProvider>(context);
+    final t = context.tokens;
     final session = provider.session;
     final isEnded = provider.isGameEnded;
     final isJoiningOrSyncing = provider.currentPin != null || provider.currentStudentName != null;
@@ -90,7 +92,7 @@ class _StudentLeaderboardScreenState
         name.toLowerCase() == currentStudentName.toLowerCase();
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: t.bg,
       body: SafeArea(
         child: Column(
           children: [
@@ -119,33 +121,45 @@ class _StudentLeaderboardScreenState
   }
 
   Widget _buildHeader(int count) {
+    final t = context.tokens;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(bottom: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: t.surface,
+        border: Border(bottom: BorderSide(color: t.border)),
       ),
       child: Column(
         children: [
+          Row(
+            children: [
+              const ThemeToggle(),
+              const Spacer(),
+            ],
+          ),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 width: 36, height: 36,
                 decoration: BoxDecoration(
-                  gradient: AppColors.gradBtn,
+                  gradient: LinearGradient(
+                    colors: [t.primaryDim, t.primary],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.leaderboard_rounded,
                     color: Colors.white, size: 18),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'Leaderboard',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.text,
+                  color: t.text,
                 ),
               ),
             ],
@@ -153,7 +167,7 @@ class _StudentLeaderboardScreenState
           const SizedBox(height: 6),
           Text(
             'Top $count players',
-            style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 13, color: t.textMuted),
           ),
         ],
       ),
@@ -161,20 +175,21 @@ class _StudentLeaderboardScreenState
   }
 
   Widget _buildPlayerRow(dynamic student, int rank, bool isCurrentPlayer) {
+    final t = context.tokens;
     final initial =
         student.name.isNotEmpty ? student.name[0].toUpperCase() : '?';
 
     final rankColors = {
-      1: [const Color(0xFFF59E0B), const Color(0xFFD97706)],
-      2: [const Color(0xFF94A3B8), const Color(0xFF64748B)],
-      3: [const Color(0xFFD85A30), const Color(0xFF993C1D)],
+      1: [t.warning, t.accentDim],
+      2: [t.textMuted, t.textSub],
+      3: [t.primary, t.primaryDim],
     };
     final rankColor = rankColors[rank];
     final avatarColors = [
-      [const Color(0xFF4F46E5), const Color(0xFF7C3AED)],
-      [const Color(0xFFD85A30), const Color(0xFF993C1D)],
-      [const Color(0xFF0F6E56), const Color(0xFF085041)],
-      [const Color(0xFF185FA5), const Color(0xFF0C447C)],
+      [t.accent, t.accentDim],
+      [t.primary, t.primaryDim],
+      [t.success, t.accentDim],
+      [t.primaryGlow, t.primary],
     ];
     final av = avatarColors[(rank - 1) % avatarColors.length];
 
@@ -182,10 +197,10 @@ class _StudentLeaderboardScreenState
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
       decoration: BoxDecoration(
-        color: isCurrentPlayer ? AppColors.surfaceHigh : AppColors.surface,
+        color: isCurrentPlayer ? t.surfaceHigh : t.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isCurrentPlayer ? AppColors.primary : AppColors.border,
+          color: isCurrentPlayer ? t.primary : t.border,
         ),
       ),
       child: Row(
@@ -201,7 +216,7 @@ class _StudentLeaderboardScreenState
                       end: Alignment.bottomRight,
                     )
                   : null,
-              color: rankColor == null ? AppColors.surfaceHigh : null,
+              color: rankColor == null ? t.surfaceHigh : null,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
@@ -210,7 +225,7 @@ class _StudentLeaderboardScreenState
                 style: TextStyle(
                   fontSize: rank <= 3 ? 14 : 11,
                   fontWeight: FontWeight.bold,
-                  color: rank > 3 ? AppColors.textSub : Colors.white,
+                  color: rank > 3 ? t.textSub : Colors.white,
                 ),
               ),
             ),
@@ -223,7 +238,7 @@ class _StudentLeaderboardScreenState
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: isCurrentPlayer
-                    ? [const Color(0xFF059669), const Color(0xFF10B981)]
+                    ? [t.success.withOpacity(0.85), t.success]
                     : av,
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -245,10 +260,10 @@ class _StudentLeaderboardScreenState
           Expanded(
             child: Text(
               student.name,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.text,
+                color: t.text,
               ),
             ),
           ),
@@ -256,15 +271,15 @@ class _StudentLeaderboardScreenState
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.primary.withAlpha(38),
+                color: t.primary.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.primary.withAlpha(80)),
+                border: Border.all(color: t.primary.withOpacity(0.3)),
               ),
-              child: const Text(
+              child: Text(
                 'You',
                 style: TextStyle(
                   fontSize: 10,
-                  color: AppColors.primaryLight,
+                  color: t.primaryGlow,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -275,16 +290,16 @@ class _StudentLeaderboardScreenState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.surfaceHigh,
+              color: t.surfaceHigh,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: t.border),
             ),
             child: Text(
               '${student.score}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: AppColors.warning,
+                color: t.warning,
               ),
             ),
           ),
@@ -294,49 +309,50 @@ class _StudentLeaderboardScreenState
   }
 
   Widget _buildStatusBox(int timeRemaining, bool isEnded) {
+    final t = context.tokens;
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withAlpha(20),
+        color: t.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withAlpha(60)),
+        border: Border.all(color: t.primary.withOpacity(0.24)),
       ),
       child: Column(
         children: [
           Text(
             isEnded ? 'Game finished' : 'Next question starting in',
-            style: const TextStyle(fontSize: 13, color: AppColors.textSub),
+            style: TextStyle(fontSize: 13, color: t.textSub),
           ),
           const SizedBox(height: 6),
           if (isEnded) ...[
-            const Text(
+            Text(
               'Final leaderboard',
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
-                color: AppColors.primaryLight,
+                color: t.primaryGlow,
               ),
             ),
             const SizedBox(height: 2),
-            const Text(
+            Text(
               'You can review the final standings here.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 11, color: t.textMuted),
             ),
           ] else ...[
             Text(
               '${timeRemaining}s',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.bold,
-                color: AppColors.primaryLight,
+                color: t.primaryGlow,
               ),
             ),
             const SizedBox(height: 2),
-            const Text(
+            Text(
               'Get ready!',
-              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 11, color: t.textMuted),
             ),
           ],
         ],
@@ -345,13 +361,18 @@ class _StudentLeaderboardScreenState
   }
 
   Widget _buildReplayButton() {
+    final t = context.tokens;
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: AppColors.gradBtn,
+        gradient: LinearGradient(
+          colors: [t.primaryDim, t.primary],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.35),
+            color: t.primary.withOpacity(0.35),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),

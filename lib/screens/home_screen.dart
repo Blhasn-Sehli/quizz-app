@@ -74,7 +74,7 @@ class _MobileHero extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF3DA899).withOpacity(0.20),
+                      context.tokens.primary.withOpacity(0.20),
                       Colors.transparent,
                     ],
                   ),
@@ -90,7 +90,7 @@ class _MobileHero extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFFF59E0B).withOpacity(0.12),
+                      context.tokens.accent.withOpacity(0.12),
                       Colors.transparent,
                     ],
                   ),
@@ -214,7 +214,7 @@ class _WebHero extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(colors: [
-                  const Color(0xFF3DA899).withOpacity(0.18),
+                  context.tokens.primary.withOpacity(0.18),
                   Colors.transparent,
                 ]),
               ),
@@ -238,29 +238,35 @@ class _WebHero extends StatelessWidget {
                           const SizedBox(height: 28),
                           _HeroTitle(fontSize: 64),
                           const SizedBox(height: 16),
-                          const Text(
-                            'Real-time multiplayer quizzes.\nEngage your class, track results\nand make learning unforgettable.',
-                            style: TextStyle(
-                              fontSize: 17,
-                              color: Color(0x73FFFFFF),
-                              height: 1.7,
+                          Builder(
+                            builder: (context) => Text(
+                              'Real-time multiplayer quizzes.\nEngage your class, track results\nand make learning unforgettable.',
+                              style: TextStyle(
+                                fontSize: 17,
+                                color: context.tokens.textSub,
+                                height: 1.7,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 36),
                           Row(
                             children: [
-                              _WebCTAButton(
-                                label: "I'm a Teacher",
-                                emoji: '🎓',
-                                gradient: const [Color(0xFF226660), Color(0xFF3DA899)],
-                                onTap: () {}, // handled in role section
+                              Builder(
+                                builder: (context) => _WebCTAButton(
+                                  label: "I'm a Teacher",
+                                  emoji: '🎓',
+                                  gradient: [context.tokens.primaryDim, context.tokens.primary],
+                                  onTap: () {}, // handled in role section
+                                ),
                               ),
                               const SizedBox(width: 14),
-                              _WebCTAButton(
-                                label: "I'm a Student",
-                                emoji: '🎮',
-                                gradient: const [Color(0xFFD97706), Color(0xFFF59E0B)],
-                                onTap: () => context.go(AppRoutes.studentJoin),
+                              Builder(
+                                builder: (context) => _WebCTAButton(
+                                  label: "I'm a Student",
+                                  emoji: '🎮',
+                                  gradient: [context.tokens.accentDim, context.tokens.accent],
+                                  onTap: () => context.go(AppRoutes.studentJoin),
+                                ),
                               ),
                             ],
                           ),
@@ -344,40 +350,46 @@ class _WebHeroCard extends StatelessWidget {
             children: [
               Container(
                 width: 8, height: 8,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle, color: Color(0xFF4ADE80),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle, color: context.tokens.success,
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Live session',
-                style: TextStyle(fontSize: 12, color: Color(0xFF4ADE80), fontWeight: FontWeight.w600),
+              Builder(
+                builder: (context) => Text(
+                  'Live session',
+                  style: TextStyle(fontSize: 12, color: context.tokens.success, fontWeight: FontWeight.w600),
+                ),
               ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.07),
+                  color: context.tokens.text.withOpacity(0.07),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text('PIN: 7382', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 2)),
+                child: Builder(
+                  builder: (context) => Text('PIN: 7382', style: TextStyle(color: context.tokens.text, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 2)),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 18),
-          const Text('Science Quiz Ch.4', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+          Builder(
+            builder: (context) => Text('Science Quiz Ch.4', style: TextStyle(color: context.tokens.text, fontSize: 18, fontWeight: FontWeight.w700)),
+          ),
           const SizedBox(height: 16),
-          _miniProgressBar('Biology', 0.82, const Color(0xFF818CF8)),
+          _miniProgressBar('Biology', 0.82, context.tokens.primary),
           const SizedBox(height: 10),
-          _miniProgressBar('Chemistry', 0.61, const Color(0xFF10B981)),
+          _miniProgressBar('Chemistry', 0.61, context.tokens.success),
           const SizedBox(height: 10),
-          _miniProgressBar('Physics', 0.44, const Color(0xFFF59E0B)),
+          _miniProgressBar('Physics', 0.44, context.tokens.accent),
           const SizedBox(height: 18),
           Row(
             children: [
-              const Icon(Icons.people_outline, color: Color(0xFF818CF8), size: 16),
+              Icon(Icons.people_outline, color: context.tokens.primary, size: 16),
               const SizedBox(width: 6),
-              const Text('14 students joined', style: TextStyle(color: Color(0xFF818CF8), fontSize: 13)),
+              Text('14 students joined', style: TextStyle(color: context.tokens.primary, fontSize: 13)),
             ],
           ),
         ],
@@ -386,27 +398,29 @@ class _WebHeroCard extends StatelessWidget {
   }
 
   Widget _miniProgressBar(String label, double value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 11, color: Color(0x73FFFFFF))),
-            Text('${(value * 100).round()}%', style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
-          ],
-        ),
-        const SizedBox(height: 5),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: value,
-            minHeight: 5,
-            backgroundColor: Colors.white.withOpacity(0.07),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
+    return Builder(
+      builder: (context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: TextStyle(fontSize: 11, color: context.tokens.textMuted)),
+              Text('${(value * 100).round()}%', style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 5),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: value,
+              minHeight: 5,
+              backgroundColor: context.tokens.text.withOpacity(0.07),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -453,11 +467,12 @@ class _WebStatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Column(
       children: [
-        Text(value, style: const TextStyle(fontFamily: 'sans-serif', fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
+        Text(value, style: TextStyle(fontFamily: 'sans-serif', fontSize: 28, fontWeight: FontWeight.w800, color: t.text, letterSpacing: -0.5)),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 12, color: Color(0x73FFFFFF))),
+        Text(label, style: TextStyle(fontSize: 12, color: t.textMuted)),
       ],
     );
   }
@@ -467,7 +482,7 @@ class _WebStatDivider extends StatelessWidget {
   const _WebStatDivider();
   @override
   Widget build(BuildContext context) {
-    return Container(width: 1, height: 40, color: Colors.white.withOpacity(0.08));
+    return Container(width: 1, height: 40, color: context.tokens.border.withOpacity(0.5));
   }
 }
 
@@ -476,10 +491,10 @@ class _WebFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 32),
-      child: const Center(
+      child: Center(
         child: Text(
           '© 2025 QuizApp · Built for educators',
-          style: TextStyle(fontSize: 12, color: Color(0x40FFFFFF)),
+          style: TextStyle(fontSize: 12, color: context.tokens.textMuted),
         ),
       ),
     );
@@ -495,6 +510,7 @@ class _BodySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     Widget content = Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 48),
       child: Column(
@@ -512,7 +528,7 @@ class _BodySection extends StatelessWidget {
           ],
           const Text(
             'CHOOSE YOUR ROLE',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 2, color: Color(0x38FFFFFF)),
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 2),
           ),
           const SizedBox(height: 14),
           _TeacherButton(),
@@ -543,18 +559,20 @@ class _LiveBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: context.tokens.primary.withOpacity(0.08),
         borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: Colors.white.withOpacity(0.14)),
+        border: Border.all(color: context.tokens.primary.withOpacity(0.14)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           _PulsingDot(),
           const SizedBox(width: 7),
-          const Text(
-            'Live quiz platform',
-            style: TextStyle(color: Color(0xD9FFFFFF), fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.04 * 11),
+          Builder(
+            builder: (context) => Text(
+              'Live quiz platform',
+              style: TextStyle(color: context.tokens.text, fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.04 * 11),
+            ),
           ),
         ],
       ),
@@ -587,9 +605,9 @@ class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderState
       opacity: _anim,
       child: Container(
         width: 6, height: 6,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Color(0xFF4ADE80),
+          color: context.tokens.success,
         ),
       ),
     );
@@ -602,12 +620,13 @@ class _HeroTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return RichText(
       text: TextSpan(
         style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w800, letterSpacing: -1, height: 1.05),
-        children: const [
-          TextSpan(text: 'Quiz', style: TextStyle(color: Colors.white)),
-          TextSpan(text: 'App', style: TextStyle(color: Color(0xFF818CF8))),
+        children: [
+          TextSpan(text: 'Quiz', style: TextStyle(color: t.text)),
+          TextSpan(text: 'App', style: TextStyle(color: t.primary)),
         ],
       ),
     );
@@ -617,9 +636,10 @@ class _HeroTitle extends StatelessWidget {
 class _HeroSubtitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Text(
+    final t = context.tokens;
+    return Text(
       'Real-time multiplayer quizzes.\nLearn, compete & win together.',
-      style: TextStyle(fontSize: 15, color: Color(0x73FFFFFF), height: 1.6),
+      style: TextStyle(fontSize: 15, color: t.textSub, height: 1.6),
     );
   }
 }
@@ -640,20 +660,25 @@ class _StatsRow extends StatelessWidget {
 
   Widget _statCard(String value, String label) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withOpacity(0.08)),
-        ),
-        child: Column(
-          children: [
-            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
-            const SizedBox(height: 3),
-            Text(label, style: const TextStyle(fontSize: 10, color: Color(0x59FFFFFF), letterSpacing: 0.5)),
-          ],
-        ),
+      child: Builder(
+        builder: (context) {
+          final t = context.tokens;
+          return Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: t.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: t.border),
+            ),
+            child: Column(
+              children: [
+                Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: t.text)),
+                const SizedBox(height: 3),
+                Text(label, style: TextStyle(fontSize: 10, color: t.textMuted, letterSpacing: 0.5)),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -662,11 +687,12 @@ class _StatsRow extends StatelessWidget {
 class _WaveClipper2 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return ClipPath(
       clipper: _WaveShape(),
       child: Container(
         height: 28,
-        color: const Color(0xFF1A0F3E).withOpacity(0.6),
+        color: t.primary.withOpacity(0.1),
       ),
     );
   }
@@ -692,8 +718,9 @@ class _FirebaseStatusRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<GameProvider>(
       builder: (context, provider, _) {
+        final t = context.tokens;
         final connected = provider.isFirebaseConnected;
-        final accent = connected ? const Color(0xFF4ADE80) : Colors.orange;
+        final accent = connected ? t.success : t.warning;
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
@@ -720,9 +747,9 @@ class _FirebaseStatusRow extends StatelessWidget {
                         .set({'timestamp': DateTime.now().toIso8601String()});
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Firebase write successful!'),
-                          backgroundColor: Color(0xFF4ADE80),
+                        SnackBar(
+                          content: const Text('Firebase write successful!'),
+                          backgroundColor: t.success,
                         ),
                       );
                     }
@@ -752,12 +779,13 @@ class _TeacherButton extends StatelessWidget {
     return StreamBuilder<Object?>(
       stream: AuthService().authStateChanges,
       builder: (context, snapshot) {
+        final t = context.tokens;
         final isLoggedIn = snapshot.hasData && snapshot.data != null;
         return _RoleCard(
           emoji: '🎓',
           title: "I'm a Teacher",
           subtitle: 'Create & host quizzes',
-          gradientColors: const [Color(0xFF226660), Color(0xFF3DA899)],
+          gradientColors: [t.primaryDim, t.primary],
           onTap: () => isLoggedIn
               ? context.go(AppRoutes.quizCreator)
               : context.go(AppRoutes.login),
@@ -770,11 +798,12 @@ class _TeacherButton extends StatelessWidget {
 class _StudentButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return _RoleCard(
       emoji: '🎮',
       title: "I'm a Student",
       subtitle: 'Join with a PIN code',
-      gradientColors: const [Color(0xFFD97706), Color(0xFFF59E0B)],
+      gradientColors: [t.accentDim, t.accent],
       onTap: () => context.go(AppRoutes.studentJoin),
     );
   }
@@ -815,6 +844,7 @@ class _RoleCardState extends State<_RoleCard> with SingleTickerProviderStateMixi
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return GestureDetector(
       onTapDown: (_) => _ctrl.forward(),
       onTapUp: (_) { _ctrl.reverse(); widget.onTap(); },
@@ -841,7 +871,7 @@ class _RoleCardState extends State<_RoleCard> with SingleTickerProviderStateMixi
                   width: 100, height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.06),
+                    color: t.text.withOpacity(0.06),
                   ),
                 ),
               ),
@@ -850,7 +880,7 @@ class _RoleCardState extends State<_RoleCard> with SingleTickerProviderStateMixi
                   Container(
                     width: 52, height: 52,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: t.text.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Center(child: Text(widget.emoji, style: const TextStyle(fontSize: 24))),
@@ -860,16 +890,16 @@ class _RoleCardState extends State<_RoleCard> with SingleTickerProviderStateMixi
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(widget.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text(widget.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: t.text)),
                         const SizedBox(height: 3),
-                        Text(widget.subtitle, style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.6))),
+                        Text(widget.subtitle, style: TextStyle(fontSize: 12, color: t.text.withOpacity(0.6))),
                       ],
                     ),
                   ),
                   Container(
                     width: 32, height: 32,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.15)),
-                    child: const Icon(Icons.chevron_right, color: Colors.white, size: 18),
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: t.text.withOpacity(0.15)),
+                    child: Icon(Icons.chevron_right, color: t.text, size: 18),
                   ),
                 ],
               ),

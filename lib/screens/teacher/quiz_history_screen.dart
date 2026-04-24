@@ -6,7 +6,7 @@ import '../../routes/app_routes.dart';
 import 'package:quizz_app/models/question.dart';
 import '../../providers/game_provider.dart';
 import '../../models/quiz.dart';
-import '../../constants/app_colors.dart';
+import '../../constants/app_theme.dart';
 
 // ─── Quiz History Screen ──────────────────────────────────────────────────────
 class QuizHistoryScreen extends StatefulWidget {
@@ -22,6 +22,8 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   Timer? _debounce;
   _SortOption _sort = _SortOption.newest;
   bool _isLoading = false;
+
+  AppColorTokens get t => context.tokens;
 
   @override
   void initState() {
@@ -85,13 +87,13 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       await provider.playQuiz(quiz);
       if (mounted) context.go(AppRoutes.teacherLobby);
     } catch (e) {
-      _showSnack('Failed to launch: $e', AppColors.danger);
+      _showSnack('Failed to launch: $e', t.danger);
     }
   }
 
   Future<void> _delete(Quiz quiz) async {
     if (quiz.id == null) {
-      _showSnack('Quiz not saved to cloud.', Colors.blue);
+      _showSnack('Quiz not saved to cloud.', t.primary);
       return;
     }
     final confirmed = await showDialog<bool>(
@@ -103,9 +105,9 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       try {
         final provider = Provider.of<GameProvider>(context, listen: false);
         await provider.deleteSavedQuiz(quiz.id!);
-        _showSnack('Quiz deleted', AppColors.success);
+        _showSnack('Quiz deleted', t.success);
       } catch (e) {
-        _showSnack('Failed to delete: $e', AppColors.danger);
+        _showSnack('Failed to delete: $e', t.danger);
       }
     }
   }
@@ -113,7 +115,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   void _showSnack(String msg, Color color) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: const TextStyle(color: Colors.white)),
+      content: Text(msg, style: TextStyle(color: t.text)),
       backgroundColor: color,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -128,7 +130,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
     final isWide = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: t.bg,
       appBar: _buildAppBar(context),
       body: Column(
         children: [
@@ -139,8 +141,8 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                 ? _buildLoadingState()
                 : RefreshIndicator(
                     onRefresh: _refresh,
-                    color: AppColors.primaryLight,
-                    backgroundColor: AppColors.surface,
+                    color: t.primaryGlow,
+                    backgroundColor: t.surface,
                     child: quizzes.isEmpty
                         ? _buildEmptyState()
                         : isWide
@@ -156,11 +158,11 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: t.surface,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textSub),
+        icon: Icon(Icons.arrow_back_rounded, color: t.textSub),
         onPressed: () {
           if (context.canPop()) {
             context.pop();
@@ -169,10 +171,10 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
           }
         },
       ),
-      title: const Text(
+      title: Text(
         'My Quizzes',
         style: TextStyle(
-          color: AppColors.text,
+          color: t.text,
           fontWeight: FontWeight.w700,
           fontSize: 18,
           letterSpacing: -0.3,
@@ -180,11 +182,11 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: AppColors.border),
+        child: Container(height: 1, color: t.border),
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.refresh_rounded, color: AppColors.textSub),
+          icon: Icon(Icons.refresh_rounded, color: t.textSub),
           tooltip: 'Refresh',
           onPressed: _refresh,
         ),
@@ -195,22 +197,22 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
 
   Widget _buildSearchBar() {
     return Container(
-      color: AppColors.surface,
+      color: t.surface,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: TextField(
         controller: _searchController,
         onChanged: _onSearchChanged,
-        style: const TextStyle(color: AppColors.text, fontSize: 14),
-        cursorColor: AppColors.primary,
+        style: TextStyle(color: t.text, fontSize: 14),
+        cursorColor: t.primary,
         decoration: InputDecoration(
           hintText: 'Search quizzes…',
-          hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
-          prefixIcon: const Icon(Icons.search_rounded,
-              color: AppColors.primaryLight, size: 20),
+          hintStyle: TextStyle(color: t.textMuted, fontSize: 14),
+          prefixIcon: Icon(Icons.search_rounded,
+              color: t.primaryGlow, size: 20),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.close_rounded,
-                      color: AppColors.textMuted, size: 18),
+                  icon: Icon(Icons.close_rounded,
+                      color: t.textMuted, size: 18),
                   onPressed: () {
                     _searchController.clear();
                     setState(() => _searchQuery = '');
@@ -218,18 +220,18 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                 )
               : null,
           filled: true,
-          fillColor: AppColors.surfaceHigh,
+          fillColor: t.surfaceHigh,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.border),
+            borderSide: BorderSide(color: t.border),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            borderSide: BorderSide(color: t.primary, width: 2),
           ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -240,18 +242,18 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
 
   Widget _buildSortBar(int count) {
     return Container(
-      color: AppColors.surface,
+      color: t.surface,
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Row(
         children: [
           Text(
             '$count quiz${count == 1 ? '' : 'zes'}',
-            style: const TextStyle(
-                color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w500),
+            style: TextStyle(
+                color: t.textMuted, fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const Spacer(),
-          const Text('Sort: ',
-              style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+          Text('Sort: ',
+              style: TextStyle(color: t.textMuted, fontSize: 12)),
           _SortChip(
               label: 'Newest',
               selected: _sort == _SortOption.newest,
@@ -313,21 +315,21 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: LinearGradient(colors: [
-                AppColors.primary.withOpacity(0.12),
-                AppColors.accent.withOpacity(0.12),
+                t.primary.withOpacity(0.12),
+                t.accent.withOpacity(0.12),
               ]),
               shape: BoxShape.circle,
             ),
-            child: const CircularProgressIndicator(
-              color: AppColors.primaryLight,
+            child: CircularProgressIndicator(
+              color: t.primaryGlow,
               strokeWidth: 3,
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Loading your quizzes…',
             style: TextStyle(
-              color: AppColors.textSub,
+              color: t.textSub,
               fontSize: 15,
               fontWeight: FontWeight.w500,
             ),
@@ -346,24 +348,24 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: LinearGradient(colors: [
-                AppColors.primary.withOpacity(0.12),
-                AppColors.accent.withOpacity(0.12),
+                t.primary.withOpacity(0.12),
+                t.accent.withOpacity(0.12),
               ]),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.folder_open_rounded,
-                color: AppColors.primaryLight.withOpacity(0.7), size: 52),
+                color: t.primaryGlow.withOpacity(0.7), size: 52),
           ),
           const SizedBox(height: 20),
-          const Text('No quizzes found',
+          Text('No quizzes found',
               style: TextStyle(
-                  color: AppColors.text, fontSize: 20, fontWeight: FontWeight.w700)),
+                  color: t.text, fontSize: 20, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           Text(
             _searchQuery.isNotEmpty
                 ? 'Try a different search term'
                 : 'Create your first quiz to get started',
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+            style: TextStyle(color: t.textMuted, fontSize: 14),
           ),
         ],
       ),
@@ -373,11 +375,15 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   Widget _buildFab(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: AppColors.gradBtn,
+        gradient: LinearGradient(
+          colors: [t.primaryDim, t.primary],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: AppColors.primary.withOpacity(0.4),
+              color: t.primary.withOpacity(0.4),
               blurRadius: 16,
               offset: const Offset(0, 6)),
         ],
@@ -455,9 +461,13 @@ class _QuizCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        gradient: AppColors.gradCard,
+        gradient: LinearGradient(
+          colors: [context.tokens.surface, context.tokens.surfaceHigh],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.tokens.border),
       ),
       child: Material(
         color: Colors.transparent,
@@ -509,8 +519,8 @@ class _QuizCard extends StatelessWidget {
                     children: [
                       Text(
                         quiz.title,
-                        style: const TextStyle(
-                          color: AppColors.text,
+                        style: TextStyle(
+                          color: context.tokens.text,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
@@ -550,14 +560,14 @@ class _QuizCard extends StatelessWidget {
                   children: [
                     _ActionBtn(
                       icon: Icons.play_arrow_rounded,
-                      color: AppColors.success,
+                      color: context.tokens.success,
                       tooltip: 'Launch',
                       onTap: onPlay,
                     ),
                     const SizedBox(height: 6),
                     _ActionBtn(
                       icon: Icons.delete_outline_rounded,
-                      color: AppColors.danger,
+                      color: context.tokens.danger,
                       tooltip: 'Delete',
                       onTap: onDelete,
                     ),
@@ -575,22 +585,23 @@ class _QuizCard extends StatelessWidget {
 class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color color;
+  final Color? color;
   const _InfoChip(
       {required this.icon,
       required this.label,
-      this.color = AppColors.textMuted});
+      this.color});
 
   @override
   Widget build(BuildContext context) {
+    final resolvedColor = color ?? context.tokens.textMuted;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: color, size: 12),
+        Icon(icon, color: resolvedColor, size: 12),
         const SizedBox(width: 3),
         Text(label,
             style: TextStyle(
-                color: color, fontSize: 11, fontWeight: FontWeight.w500)),
+                color: resolvedColor, fontSize: 11, fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -646,16 +657,16 @@ class _SortChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withOpacity(0.2) : Colors.transparent,
+          color: selected ? context.tokens.primary.withOpacity(0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-              color: selected ? AppColors.primary : AppColors.border,
+              color: selected ? context.tokens.primary : context.tokens.border,
               width: selected ? 1.5 : 1),
         ),
         child: Text(
           label,
           style: TextStyle(
-              color: selected ? AppColors.primaryLight : AppColors.textMuted,
+              color: selected ? context.tokens.primaryGlow : context.tokens.textMuted,
               fontSize: 11,
               fontWeight: FontWeight.w600),
         ),
@@ -672,7 +683,7 @@ class _ConfirmDeleteDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.tokens.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -682,22 +693,22 @@ class _ConfirmDeleteDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.danger.withOpacity(0.12),
+                color: context.tokens.danger.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.delete_outline_rounded,
-                  color: AppColors.danger, size: 32),
+              child: Icon(Icons.delete_outline_rounded,
+                  color: context.tokens.danger, size: 32),
             ),
             const SizedBox(height: 16),
-            const Text('Delete Quiz?',
+            Text('Delete Quiz?',
                 style: TextStyle(
-                    color: AppColors.text,
+                    color: context.tokens.text,
                     fontSize: 18,
                     fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             Text(
               '"$title" will be permanently deleted.',
-              style: const TextStyle(color: AppColors.textSub, fontSize: 14),
+              style: TextStyle(color: context.tokens.textSub, fontSize: 14),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -707,8 +718,8 @@ class _ConfirmDeleteDialog extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context, false),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textSub,
-                      side: const BorderSide(color: AppColors.border),
+                      foregroundColor: context.tokens.textSub,
+                      side: BorderSide(color: context.tokens.border),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -721,8 +732,8 @@ class _ConfirmDeleteDialog extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context, true),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.danger,
-                      foregroundColor: Colors.white,
+                      backgroundColor: context.tokens.danger,
+                      foregroundColor: context.tokens.text,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 12),

@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/auth_service.dart';
+import '../../constants/app_theme.dart';
+import '../../widgets/theme_toggle.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -84,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Reset email sent to $email'),
-            backgroundColor: const Color(0xFF10B981),
+            backgroundColor: context.tokens.success,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             duration: const Duration(seconds: 4),
@@ -98,8 +100,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Scaffold(
-      backgroundColor: const Color(0xFF08080F),
+      backgroundColor: t.bg,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 800;
@@ -111,25 +114,30 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
   // ── WEB LAYOUT ──────────────────────────────────────────
   Widget _buildWebLayout() {
+    final t = context.tokens;
     return Row(
       children: [
         // Left panel
         Expanded(
           flex: 5,
           child: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF1A0F3E), Color(0xFF0F3460), Color(0xFF0A1628)],
-                stops: [0.0, 0.5, 1.0],
+                colors: [t.bgDeep, t.primaryDim, t.bg],
+                stops: const [0.0, 0.5, 1.0],
               ),
             ),
             child: Stack(
               children: [
-                // Glow orbs
-                Positioned(top: -80, right: -80, child: _glowOrb(300, const Color(0xFF6366F1), 0.15)),
-                Positioned(bottom: -60, left: -60, child: _glowOrb(200, const Color(0xFF10B981), 0.1)),
+                Positioned(top: -80, right: -80, child: _glowOrb(300, t.primary, 0.15)),
+                Positioned(bottom: -60, left: -60, child: _glowOrb(200, t.success, 0.1)),
+                const Positioned(
+                  top: 16,
+                  right: 16,
+                  child: ThemeToggle(),
+                ),
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(48),
@@ -165,18 +173,18 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                         const Spacer(),
                         // Branding
                         RichText(
-                          text: const TextSpan(
-                            style: TextStyle(fontSize: 48, fontWeight: FontWeight.w800, letterSpacing: -1, height: 1.05),
+                          text: TextSpan(
+                            style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w800, letterSpacing: -1, height: 1.05),
                             children: [
-                              TextSpan(text: 'Quiz', style: TextStyle(color: Colors.white)),
-                              TextSpan(text: 'App', style: TextStyle(color: Color(0xFF818CF8))),
+                              const TextSpan(text: 'Quiz', style: TextStyle(color: Colors.white)),
+                              TextSpan(text: 'App', style: TextStyle(color: t.primaryGlow)),
                             ],
                           ),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'The live quiz platform\nbuilt for educators.',
-                          style: TextStyle(fontSize: 17, color: Color(0x73FFFFFF), height: 1.6),
+                          style: TextStyle(fontSize: 17, color: t.textSub, height: 1.6),
                         ),
                         const SizedBox(height: 36),
                         // Feature pills
@@ -190,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                         ),
                         const Spacer(),
                         // Decorative card
-                        _WebSideCard(),
+                        const _WebSideCard(),
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -204,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         Expanded(
           flex: 4,
           child: Container(
-            color: const Color(0xFF08080F),
+            color: t.bgDeep,
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
@@ -230,21 +238,27 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   Widget _buildMobileLayout() {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final t = context.tokens;
         return Container(
           width: double.infinity,
           constraints: BoxConstraints(minHeight: constraints.maxHeight),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF1A0F3E), Color(0xFF0F3460), Color(0xFF0A1628)],
-              stops: [0.0, 0.5, 1.0],
+              colors: [t.bgDeep, t.primaryDim, t.bg],
+              stops: const [0.0, 0.5, 1.0],
             ),
           ),
           child: Stack(
             children: [
-              Positioned(top: -80, right: -80, child: _glowOrb(280, const Color(0xFF6366F1), 0.15)),
-              Positioned(bottom: -60, left: -60, child: _glowOrb(200, const Color(0xFF10B981), 0.1)),
+              Positioned(top: -80, right: -80, child: _glowOrb(280, t.primary, 0.15)),
+              Positioned(bottom: -60, left: -60, child: _glowOrb(200, t.success, 0.1)),
+              const Positioned(
+                top: 16,
+                right: 16,
+                child: ThemeToggle(),
+              ),
               SafeArea(
                 child: SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
@@ -298,12 +312,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                               Container(
                                 width: 72, height: 72,
                                 decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
+                                  gradient: LinearGradient(
+                                    colors: [t.primary, t.accentDim],
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
-                                    BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.35), blurRadius: 24, offset: const Offset(0, 8)),
+                                    BoxShadow(color: t.primary.withOpacity(0.35), blurRadius: 24, offset: const Offset(0, 8)),
                                   ],
                                 ),
                                 child: const Icon(Icons.school_rounded, color: Colors.white, size: 34),
@@ -314,9 +328,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5),
                               ),
                               const SizedBox(height: 6),
-                              const Text(
+                              Text(
                                 'Sign in to create and manage quizzes',
-                                style: TextStyle(fontSize: 14, color: Color(0x73FFFFFF)),
+                                style: TextStyle(fontSize: 14, color: t.textSub),
                               ),
                               const SizedBox(height: 32),
                               _buildFormContent(),
@@ -339,18 +353,18 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   // ── FORM CONTENT (shared) ────────────────────────────────
   Widget _buildFormContent() {
     final isWide = MediaQuery.of(context).size.width >= 800;
+    final t = context.tokens;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (isWide) ...[
-          // Icon + heading for web right panel
           Container(
             width: 64, height: 64,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]),
+              gradient: LinearGradient(colors: [t.primary, t.accentDim]),
               borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 6))],
+              boxShadow: [BoxShadow(color: t.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 6))],
             ),
             child: const Icon(Icons.school_rounded, color: Colors.white, size: 30),
           ),
@@ -360,9 +374,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Sign in to your teacher account',
-            style: TextStyle(fontSize: 14, color: Color(0x73FFFFFF)),
+            style: TextStyle(fontSize: 14, color: t.textSub),
           ),
           const SizedBox(height: 32),
         ],
@@ -374,7 +388,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         ],
 
         // Email field
-        _InputLabel(label: 'Email address'),
+        const _InputLabel(label: 'Email address'),
         const SizedBox(height: 8),
         _StyledTextField(
           controller: _emailController,
@@ -386,7 +400,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         const SizedBox(height: 16),
 
         // Password field
-        _InputLabel(label: 'Password'),
+        const _InputLabel(label: 'Password'),
         const SizedBox(height: 8),
         _StyledTextField(
           controller: _passwordController,
@@ -398,7 +412,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             onTap: () => setState(() => _obscurePassword = !_obscurePassword),
             child: Icon(
               _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-              color: const Color(0xFF555577),
+              color: t.textMuted,
               size: 20,
             ),
           ),
@@ -410,9 +424,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           alignment: Alignment.centerRight,
           child: GestureDetector(
             onTap: _isLoading ? null : _handleForgotPassword,
-            child: const Text(
+            child: Text(
               'Forgot password?',
-              style: TextStyle(fontSize: 13, color: Color(0xFF818CF8), fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 13, color: t.primaryGlow, fontWeight: FontWeight.w500),
             ),
           ),
         ),
@@ -425,12 +439,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         // Divider
         Row(
           children: [
-            Expanded(child: Container(height: 1, color: const Color(0xFF1E1E38))),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14),
-              child: Text('or', style: TextStyle(fontSize: 12, color: Color(0xFF555577))),
+            Expanded(child: Container(height: 1, color: t.border)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Text('or', style: TextStyle(fontSize: 12, color: t.textMuted)),
             ),
-            Expanded(child: Container(height: 1, color: const Color(0xFF1E1E38))),
+            Expanded(child: Container(height: 1, color: t.border)),
           ],
         ),
         const SizedBox(height: 20),
@@ -439,19 +453,19 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: const Color(0xFF111124),
+            color: t.surfacePop,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFF1E1E38)),
+            border: Border.all(color: t.border),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text("Don't have an account? ", style: TextStyle(color: Color(0x73FFFFFF), fontSize: 14)),
+              Text("Don't have an account? ", style: TextStyle(color: t.textSub, fontSize: 14)),
               GestureDetector(
                 onTap: _isLoading ? null : () => context.go(AppRoutes.register),
-                child: const Text(
+                child: Text(
                   'Sign Up',
-                  style: TextStyle(color: Color(0xFF818CF8), fontWeight: FontWeight.w700, fontSize: 14),
+                  style: TextStyle(color: t.primaryGlow, fontWeight: FontWeight.w700, fontSize: 14),
                 ),
               ),
             ],
@@ -484,7 +498,7 @@ class _InputLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF818CF8), letterSpacing: 0.5),
+      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.tokens.primaryGlow, letterSpacing: 0.5),
     );
   }
 }
@@ -510,32 +524,33 @@ class _StyledTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return TextField(
       controller: controller,
       enabled: enabled,
       obscureText: obscureText,
       keyboardType: keyboardType,
       style: const TextStyle(color: Colors.white, fontSize: 15),
-      cursorColor: const Color(0xFF818CF8),
+      cursorColor: t.primaryGlow,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF555577), fontSize: 14),
-        prefixIcon: Icon(icon, color: const Color(0xFF555577), size: 20),
+        hintStyle: TextStyle(color: t.textMuted, fontSize: 14),
+        prefixIcon: Icon(icon, color: t.textMuted, size: 20),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: const Color(0xFF111124),
+        fillColor: t.surfacePop,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF1E1E38)),
+          borderSide: BorderSide(color: t.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF1E1E38)),
+          borderSide: BorderSide(color: t.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF6366F1), width: 1.5),
+          borderSide: BorderSide(color: t.primary, width: 1.5),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -552,19 +567,20 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFE24B4A).withOpacity(0.1),
+        color: t.danger.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE24B4A).withOpacity(0.3)),
+        border: Border.all(color: t.danger.withOpacity(0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded, color: Color(0xFFE24B4A), size: 18),
+          Icon(Icons.error_outline_rounded, color: t.danger, size: 18),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(message, style: const TextStyle(color: Color(0xFFE24B4A), fontSize: 13, height: 1.4)),
+            child: Text(message, style: TextStyle(color: t.danger, fontSize: 13, height: 1.4)),
           ),
         ],
       ),
@@ -597,6 +613,7 @@ class _SignInButtonState extends State<_SignInButton> with SingleTickerProviderS
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return GestureDetector(
       onTapDown: widget.onTap != null ? (_) => _ctrl.forward() : null,
       onTapUp: widget.onTap != null ? (_) { _ctrl.reverse(); widget.onTap!(); } : null,
@@ -607,11 +624,11 @@ class _SignInButtonState extends State<_SignInButton> with SingleTickerProviderS
           height: 54,
           decoration: BoxDecoration(
             gradient: widget.isLoading
-                ? const LinearGradient(colors: [Color(0xFF2D2A60), Color(0xFF3D2A60)])
-                : const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]),
+                ? LinearGradient(colors: [t.primaryDim, t.primary])
+                : LinearGradient(colors: [t.primary, t.accentDim]),
             borderRadius: BorderRadius.circular(14),
             boxShadow: widget.isLoading ? [] : [
-              BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 6)),
+              BoxShadow(color: t.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 6)),
             ],
           ),
           child: Center(
@@ -642,6 +659,7 @@ class _FeaturePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -652,9 +670,9 @@ class _FeaturePill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: const Color(0xFF818CF8), size: 14),
+          Icon(icon, color: t.primaryGlow, size: 14),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12, color: Color(0xB3FFFFFF), fontWeight: FontWeight.w500)),
+          Text(label, style: TextStyle(fontSize: 12, color: t.text, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -662,8 +680,11 @@ class _FeaturePill extends StatelessWidget {
 }
 
 class _WebSideCard extends StatelessWidget {
+  const _WebSideCard();
+
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -676,19 +697,19 @@ class _WebSideCard extends StatelessWidget {
           Container(
             width: 44, height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.2),
+              color: t.primary.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.verified_user_outlined, color: Color(0xFF818CF8), size: 22),
+            child: Icon(Icons.verified_user_outlined, color: t.primaryGlow, size: 22),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Secure teacher accounts', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                SizedBox(height: 3),
-                Text('Protected by Firebase Auth', style: TextStyle(color: Color(0x73FFFFFF), fontSize: 12)),
+                const Text('Secure teacher accounts', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 3),
+                Text('Protected by Firebase Auth', style: TextStyle(color: t.textSub, fontSize: 12)),
               ],
             ),
           ),

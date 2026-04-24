@@ -5,7 +5,9 @@ import '../../providers/game_provider.dart';
 import '../../models/question.dart';
 import '../../services/auth_service.dart';
 import '../../constants/app_colors.dart';
+import '../../constants/app_theme.dart';
 import '../../routes/app_routes.dart';
+import '../../widgets/theme_toggle.dart';
 
 // ─── Quiz Creator Screen ──────────────────────────────────────────────────────
 class QuizCreatorScreen extends StatefulWidget {
@@ -38,10 +40,30 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
   }
 
   // ── helpers ──
+  AppColorTokens get _t => context.tokens;
+
+  LinearGradient get _gradBtn => LinearGradient(
+        colors: [_t.primaryDim, _t.primary],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      );
+
+  LinearGradient get _gradBtnGreen => LinearGradient(
+        colors: [_t.success.withOpacity(0.85), _t.success],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      );
+
+  LinearGradient get _gradCard => LinearGradient(
+        colors: [_t.surface, _t.surfaceHigh],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+
   Color _typeColor(QuestionType t) => switch (t) {
-        QuestionType.yesNo         => const Color(0xFFF59E0B),
-        QuestionType.multipleChoice => AppColors.primary,
-        QuestionType.text          => AppColors.accentLight,
+        QuestionType.yesNo          => _t.warning,
+        QuestionType.multipleChoice => _t.primary,
+        QuestionType.text           => _t.accent,
       };
 
   String _typeLabel(QuestionType t) => switch (t) {
@@ -59,11 +81,11 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
   void _showError(String msg) => ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(children: [
-            const Icon(Icons.error_outline, color: Colors.white, size: 18),
+            Icon(Icons.error_outline, color: Colors.white, size: 18),
             const SizedBox(width: 8),
             Text(msg, style: const TextStyle(color: Colors.white)),
           ]),
-          backgroundColor: AppColors.danger,
+          backgroundColor: _t.danger,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.all(16),
@@ -73,11 +95,11 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
   void _showSuccess(String msg) => ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(children: [
-            const Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+            Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
             const SizedBox(width: 8),
             Text(msg, style: const TextStyle(color: Colors.white)),
           ]),
-          backgroundColor: AppColors.success,
+          backgroundColor: _t.success,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.all(16),
@@ -87,7 +109,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
   Future<void> _addQuestion() async {
     final result = await showDialog<Question>(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.75),
+      barrierColor: _t.bgDeep.withOpacity(0.75),
       builder: (_) => const QuestionEditDialog(),
     );
     if (result != null) setState(() => _questions.add(result));
@@ -96,7 +118,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
   Future<void> _editQuestion(int index) async {
     final result = await showDialog<Question>(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.75),
+      barrierColor: _t.bgDeep.withOpacity(0.75),
       builder: (_) => QuestionEditDialog(question: _questions[index]),
     );
     if (result != null) setState(() => _questions[index] = result);
@@ -111,9 +133,10 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
   Widget build(BuildContext context) {
     final provider = Provider.of<GameProvider>(context);
     final isWide = MediaQuery.of(context).size.width > 800;
+    final t = context.tokens;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: t.bg,
       appBar: _buildAppBar(context, provider),
       body: isWide
           ? _buildWideLayout(context, provider)
@@ -122,22 +145,23 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context, GameProvider provider) {
+    final t = context.tokens;
     return AppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: t.surface,
       elevation: 0,
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: t.surface.withOpacity(0.0),
       leading: Container(
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          gradient: AppColors.gradBtn,
+          gradient: _gradBtn,
           borderRadius: BorderRadius.circular(10),
         ),
         child: const Icon(Icons.quiz_rounded, color: Colors.white, size: 20),
       ),
-      title: const Text(
+      title: Text(
         'Quiz Creator',
         style: TextStyle(
-          color: AppColors.text,
+          color: t.text,
           fontWeight: FontWeight.w700,
           fontSize: 18,
           letterSpacing: -0.3,
@@ -145,14 +169,15 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: AppColors.border),
+        child: Container(height: 1, color: t.border),
       ),
       actions: [
+        const ThemeToggle(),
         // Save
         _AppBarBtn(
           icon: Icons.save_rounded,
           label: 'Save',
-          gradient: AppColors.gradBtn,
+          gradient: _gradBtn,
           onTap: () async {
             if (_titleController.text.trim().isEmpty) {
               _showError('Please enter a quiz title');
@@ -170,20 +195,20 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
         // Load
         PopupMenuButton<int>(
           tooltip: 'Load Quiz',
-          color: AppColors.surfaceHigh,
+          color: t.surfaceHigh,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 10),
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: t.border),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Row(
-              children: const [
-                Icon(Icons.folder_open_rounded, color: AppColors.primaryLight, size: 18),
+            child: const Row(
+              children: [
+                Icon(Icons.folder_open_rounded, color: Colors.white, size: 18),
                 SizedBox(width: 6),
-                Text('Load', style: TextStyle(color: AppColors.primaryLight, fontSize: 13)),
+                Text('Load', style: TextStyle(color: Colors.white, fontSize: 13)),
               ],
             ),
           ),
@@ -198,10 +223,10 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
             final quizzes = provider.savedQuizzes;
             if (quizzes.isEmpty) {
               return [
-                const PopupMenuItem<int>(
+                PopupMenuItem<int>(
                   enabled: false,
                   child: Text('No saved quizzes',
-                      style: TextStyle(color: AppColors.textMuted)),
+                      style: TextStyle(color: t.textMuted)),
                 ),
               ];
             }
@@ -211,7 +236,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
                 .map((e) => PopupMenuItem<int>(
                       value: e.key,
                       child: Text(e.value.title,
-                          style: const TextStyle(color: AppColors.text)),
+                          style: TextStyle(color: t.text)),
                     ))
                 .toList();
           },
@@ -219,13 +244,13 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
         const SizedBox(width: 8),
         // History
         IconButton(
-          icon: const Icon(Icons.history_rounded, color: AppColors.textSub),
+          icon: Icon(Icons.history_rounded, color: t.textSub),
           tooltip: 'Quiz History',
           onPressed: () => context.go(AppRoutes.quizHistory),
         ),
         // Logout
         IconButton(
-          icon: const Icon(Icons.logout_rounded, color: AppColors.textSub),
+          icon: Icon(Icons.logout_rounded, color: t.textSub),
           tooltip: 'Logout',
           onPressed: () async {
             try {
@@ -253,11 +278,11 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
         SizedBox(
           width: 340,
           child: Container(
-            color: AppColors.surface,
+            color: _t.surface,
             child: _buildLeftPanel(context, provider),
           ),
         ),
-        Container(width: 1, color: AppColors.border),
+        Container(width: 1, color: _t.border),
         // Right panel – questions
         Expanded(child: _buildQuestionsPanel(context, provider)),
       ],
@@ -282,9 +307,9 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Quiz Details',
+          Text('Quiz Details',
               style: TextStyle(
-                  color: AppColors.primaryLight,
+                  color: _t.primaryGlow,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.2)),
@@ -296,7 +321,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
           const Spacer(),
           // Action buttons
           _GradientButton(
-            gradient: AppColors.gradBtnGreen,
+            gradient: _gradBtnGreen,
             icon: Icons.play_arrow_rounded,
             label: 'Launch Session',
             enabled: _questions.isNotEmpty,
@@ -314,7 +339,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
           ),
           const SizedBox(height: 12),
           _GradientButton(
-            gradient: AppColors.gradBtn,
+            gradient: _gradBtn,
             icon: Icons.add_rounded,
             label: 'Add Question',
             onTap: _addQuestion,
@@ -326,7 +351,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
 
   Widget _buildTitleCard() {
     return Container(
-      color: AppColors.surface,
+      color: _t.surface,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       child: _buildTitleInput(),
     );
@@ -335,29 +360,29 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
   Widget _buildTitleInput() {
     return TextField(
       controller: _titleController,
-      style: const TextStyle(
-          color: AppColors.text, fontSize: 16, fontWeight: FontWeight.w600),
-      cursorColor: AppColors.primary,
+      style: TextStyle(
+          color: _t.text, fontSize: 16, fontWeight: FontWeight.w600),
+      cursorColor: _t.primary,
       decoration: InputDecoration(
         labelText: 'Quiz Title',
         labelStyle:
-            const TextStyle(color: AppColors.primaryLight, fontSize: 13, fontWeight: FontWeight.w500),
+            TextStyle(color: _t.primaryGlow, fontSize: 13, fontWeight: FontWeight.w500),
         hintText: 'e.g. Science Chapter 4',
-        hintStyle: const TextStyle(color: AppColors.textMuted),
-        prefixIcon: const Icon(Icons.title_rounded, color: AppColors.primaryLight, size: 20),
+        hintStyle: TextStyle(color: _t.textMuted),
+        prefixIcon: Icon(Icons.title_rounded, color: _t.primaryGlow, size: 20),
         filled: true,
-        fillColor: AppColors.surfaceHigh,
+        fillColor: _t.surfaceHigh,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: _t.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: _t.primary, width: 2),
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -406,7 +431,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
           ),
         ),
         if (isWide) const SizedBox.shrink()
-        else const SizedBox(height: 80), // space for bottom bar
+        else const SizedBox(height: 80),
       ],
     );
   }
@@ -416,14 +441,14 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: const Border(top: BorderSide(color: AppColors.border)),
+        color: _t.surface,
+        border: Border(top: BorderSide(color: _t.border)),
       ),
       child: Row(
         children: [
           Expanded(
             child: _GradientButton(
-              gradient: AppColors.gradBtn,
+              gradient: _gradBtn,
               icon: Icons.add_rounded,
               label: 'Add Question',
               onTap: _addQuestion,
@@ -432,7 +457,7 @@ class _QuizCreatorScreenState extends State<QuizCreatorScreen>
           const SizedBox(width: 12),
           Expanded(
             child: _GradientButton(
-              gradient: AppColors.gradBtnGreen,
+              gradient: _gradBtnGreen,
               icon: Icons.play_arrow_rounded,
               label: 'Launch',
               enabled: _questions.isNotEmpty,
@@ -462,6 +487,7 @@ class _StatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     final mcCount = questions.where((q) => q.type == QuestionType.multipleChoice).length;
     final ynCount = questions.where((q) => q.type == QuestionType.yesNo).length;
     final txCount = questions.where((q) => q.type == QuestionType.text).length;
@@ -470,16 +496,20 @@ class _StatsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: AppColors.gradCard,
+        gradient: LinearGradient(
+          colors: [t.surface, t.surfaceHigh],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: t.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Overview',
+          Text('Overview',
               style: TextStyle(
-                  color: AppColors.primaryLight,
+                  color: t.primaryGlow,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.1)),
@@ -488,30 +518,30 @@ class _StatsCard extends StatelessWidget {
               icon: Icons.quiz_rounded,
               label: 'Total Questions',
               value: '${questions.length}',
-              color: AppColors.primary),
+              color: t.primary),
           _StatRow(
               icon: Icons.star_rounded,
               label: 'Total Points',
               value: '$totalPts',
-              color: AppColors.warning),
+              color: t.warning),
           if (mcCount > 0)
             _StatRow(
                 icon: Icons.checklist_rounded,
                 label: 'Multiple Choice',
                 value: '$mcCount',
-                color: AppColors.primary),
+                color: t.primary),
           if (ynCount > 0)
             _StatRow(
                 icon: Icons.thumbs_up_down_rounded,
                 label: 'Yes / No',
                 value: '$ynCount',
-                color: AppColors.warning),
+                color: t.warning),
           if (txCount > 0)
             _StatRow(
                 icon: Icons.edit_note_rounded,
                 label: 'Text Answer',
                 value: '$txCount',
-                color: AppColors.accentLight),
+                color: t.accent),
         ],
       ),
     );
@@ -531,6 +561,7 @@ class _StatRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -539,7 +570,7 @@ class _StatRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
               child: Text(label,
-                  style: const TextStyle(color: AppColors.textSub, fontSize: 13))),
+                  style: TextStyle(color: t.textSub, fontSize: 13))),
           Text(value,
               style: TextStyle(
                   color: color, fontSize: 13, fontWeight: FontWeight.w700)),
@@ -574,6 +605,13 @@ class _QuestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
+    final gradCard = LinearGradient(
+      colors: [t.surface, t.surfaceHigh],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 560;
@@ -586,7 +624,7 @@ class _QuestionCard extends StatelessWidget {
                 children: [
                   _IconBtn(
                     icon: Icons.edit_rounded,
-                    color: AppColors.primary,
+                    color: t.primary,
                     onTap: onEdit,
                     iconSize: actionIconSize,
                     padding: actionPadding,
@@ -594,7 +632,7 @@ class _QuestionCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   _IconBtn(
                     icon: Icons.delete_rounded,
-                    color: AppColors.danger,
+                    color: t.danger,
                     onTap: onDelete,
                     iconSize: actionIconSize,
                     padding: actionPadding,
@@ -605,7 +643,7 @@ class _QuestionCard extends StatelessWidget {
                 children: [
                   _IconBtn(
                     icon: Icons.edit_rounded,
-                    color: AppColors.primary,
+                    color: t.primary,
                     onTap: onEdit,
                     iconSize: actionIconSize,
                     padding: actionPadding,
@@ -613,7 +651,7 @@ class _QuestionCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   _IconBtn(
                     icon: Icons.delete_rounded,
-                    color: AppColors.danger,
+                    color: t.danger,
                     onTap: onDelete,
                     iconSize: actionIconSize,
                     padding: actionPadding,
@@ -624,35 +662,31 @@ class _QuestionCard extends StatelessWidget {
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            gradient: AppColors.gradCard,
+            gradient: gradCard,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: t.border),
           ),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Drag handle + number
                 dragHandle,
                 const SizedBox(width: 12),
-                // Content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Question text
                       Text(
                         question.text,
-                        style: const TextStyle(
-                            color: AppColors.text,
+                        style: TextStyle(
+                            color: t.text,
                             fontSize: 15,
                             fontWeight: FontWeight.w600),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
-                      // Type + metadata
                       Wrap(
                         spacing: 8,
                         runSpacing: 6,
@@ -665,14 +699,13 @@ class _QuestionCard extends StatelessWidget {
                           _MetaBadge(
                               icon: Icons.timer_outlined,
                               label: '${question.timeLimit}s',
-                              color: AppColors.textSub),
+                              color: t.textSub),
                           _MetaBadge(
                               icon: Icons.star_outline_rounded,
                               label: '${question.points}',
-                              color: AppColors.warning),
+                              color: t.warning),
                         ],
                       ),
-                      // Options preview (MC / YesNo)
                       if ((question.type == QuestionType.multipleChoice ||
                               question.type == QuestionType.yesNo) &&
                           question.options != null)
@@ -724,17 +757,21 @@ class _QuestionDragHandle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Column(
       children: [
-        const Icon(Icons.drag_indicator_rounded,
-            color: AppColors.textMuted, size: 20),
+        Icon(Icons.drag_indicator_rounded, color: t.textMuted, size: 20),
         const SizedBox(height: 4),
         Container(
           width: 28,
           height: 28,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: AppColors.gradBtn,
+            gradient: LinearGradient(
+              colors: [t.primaryDim, t.primary],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
@@ -805,28 +842,28 @@ class _OptionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: isCorrect
-            ? AppColors.success.withOpacity(0.15)
-            : AppColors.surfaceHigh,
+            ? t.success.withOpacity(0.15)
+            : t.surfaceHigh,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-            color: isCorrect ? AppColors.success.withOpacity(0.5) : AppColors.border),
+            color: isCorrect ? t.success.withOpacity(0.5) : t.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (isCorrect)
-            const Padding(
-              padding: EdgeInsets.only(right: 4),
-              child: Icon(Icons.check_rounded,
-                  color: AppColors.success, size: 11),
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Icon(Icons.check_rounded, color: t.success, size: 11),
             ),
           Text(label,
               style: TextStyle(
-                  color: isCorrect ? AppColors.success : AppColors.textSub,
+                  color: isCorrect ? t.success : t.textSub,
                   fontSize: 11)),
         ],
       ),
@@ -871,6 +908,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -880,30 +918,34 @@ class _EmptyState extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.primary.withOpacity(0.15),
-                  AppColors.accent.withOpacity(0.15)
+                  t.primary.withOpacity(0.15),
+                  t.accent.withOpacity(0.15)
                 ],
               ),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.quiz_outlined,
-                color: AppColors.primaryLight.withOpacity(0.8), size: 48),
+                color: t.primaryGlow.withOpacity(0.8), size: 48),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'No questions yet',
             style: TextStyle(
-                color: AppColors.text, fontSize: 20, fontWeight: FontWeight.w700),
+                color: t.text, fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Tap "Add Question" to start building your quiz',
-            style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+            style: TextStyle(color: t.textMuted, fontSize: 14),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           _GradientButton(
-            gradient: AppColors.gradBtn,
+            gradient: LinearGradient(
+              colors: [t.primaryDim, t.primary],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
             icon: Icons.add_rounded,
             label: 'Add First Question',
             onTap: onAdd,
@@ -932,6 +974,7 @@ class _GradientButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Opacity(
       opacity: enabled ? 1 : 0.45,
       child: Material(
@@ -942,7 +985,7 @@ class _GradientButton extends StatelessWidget {
           child: Ink(
             decoration: BoxDecoration(
               gradient: enabled ? gradient : null,
-              color: enabled ? null : AppColors.surfaceHigh,
+              color: enabled ? null : t.surfaceHigh,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Container(
@@ -1031,6 +1074,14 @@ class _QuestionEditDialogState extends State<QuestionEditDialog> {
   static const _timeLimits = [10, 20, 30, 45, 60, 90, 120];
   static const _pointOptions = [500, 1000, 2000];
 
+  AppColorTokens get _t => context.tokens;
+
+  LinearGradient get _gradBtn => LinearGradient(
+        colors: [_t.primaryDim, _t.primary],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      );
+
   @override
   void initState() {
     super.initState();
@@ -1068,27 +1119,27 @@ class _QuestionEditDialogState extends State<QuestionEditDialog> {
       InputDecoration(
         labelText: label,
         hintText: hint,
-        labelStyle: const TextStyle(
-            color: AppColors.primaryLight, fontSize: 13, fontWeight: FontWeight.w500),
-        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+        labelStyle: TextStyle(
+            color: _t.primaryGlow, fontSize: 13, fontWeight: FontWeight.w500),
+        hintStyle: TextStyle(color: _t.textMuted, fontSize: 13),
         prefixIcon: prefix,
         filled: true,
-        fillColor: AppColors.surfaceHigh,
+        fillColor: _t.surfaceHigh,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: _t.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: _t.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.danger),
+          borderSide: BorderSide(color: _t.danger),
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -1099,7 +1150,7 @@ class _QuestionEditDialogState extends State<QuestionEditDialog> {
     final isWide = MediaQuery.of(context).size.width > 600;
 
     return Dialog(
-      backgroundColor: AppColors.surface,
+      backgroundColor: _t.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       insetPadding: EdgeInsets.symmetric(
           horizontal: isWide ? 80 : 16, vertical: 24),
@@ -1119,7 +1170,7 @@ class _QuestionEditDialogState extends State<QuestionEditDialog> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        gradient: AppColors.gradBtn,
+                        gradient: _gradBtn,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -1135,21 +1186,21 @@ class _QuestionEditDialogState extends State<QuestionEditDialog> {
                       widget.question == null
                           ? 'Add Question'
                           : 'Edit Question',
-                      style: const TextStyle(
-                          color: AppColors.text,
+                      style: TextStyle(
+                          color: _t.text,
                           fontSize: 18,
                           fontWeight: FontWeight.w700),
                     ),
                     const Spacer(),
                     _IconBtn(
                       icon: Icons.close_rounded,
-                      color: AppColors.textMuted,
+                      color: _t.textMuted,
                       onTap: () => Navigator.pop(context),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Container(height: 1, color: AppColors.border, margin: const EdgeInsets.symmetric(vertical: 16)),
+                Container(height: 1, color: _t.border, margin: const EdgeInsets.symmetric(vertical: 16)),
                 Flexible(
                   child: SingleChildScrollView(
                     child: Column(
@@ -1158,14 +1209,14 @@ class _QuestionEditDialogState extends State<QuestionEditDialog> {
                         // Question text
                         TextFormField(
                           controller: _textController,
-                          style: const TextStyle(color: AppColors.text, fontSize: 15),
-                          cursorColor: AppColors.primary,
+                          style: TextStyle(color: _t.text, fontSize: 15),
+                          cursorColor: _t.primary,
                           maxLines: 3,
                           minLines: 1,
                           decoration: _inputDec('Question Text',
                               hint: 'e.g. What is the capital of France?',
-                              prefix: const Icon(Icons.help_outline_rounded,
-                                  color: AppColors.primaryLight, size: 18)),
+                              prefix: Icon(Icons.help_outline_rounded,
+                                  color: _t.primaryGlow, size: 18)),
                           validator: (v) =>
                               (v?.isEmpty ?? true) ? 'Enter question' : null,
                         ),
@@ -1203,13 +1254,13 @@ class _QuestionEditDialogState extends State<QuestionEditDialog> {
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _correctAnswerTextController,
-                            style: const TextStyle(color: AppColors.text),
-                            cursorColor: AppColors.primary,
+                            style: TextStyle(color: _t.text),
+                            cursorColor: _t.primary,
                             decoration: _inputDec(
                               'Keywords (comma-separated)',
                               hint: 'e.g. paris, france, capital',
-                              prefix: const Icon(Icons.edit_note_rounded,
-                                  color: AppColors.primaryLight, size: 18),
+                              prefix: Icon(Icons.edit_note_rounded,
+                                  color: _t.primaryGlow, size: 18),
                             ),
                             validator: (v) => (v?.isEmpty ?? true)
                                 ? 'Enter answer keywords'
@@ -1262,7 +1313,7 @@ class _QuestionEditDialogState extends State<QuestionEditDialog> {
                 const SizedBox(height: 20),
                 // Save button
                 _GradientButton(
-                  gradient: AppColors.gradBtn,
+                  gradient: _gradBtn,
                   icon: Icons.check_rounded,
                   label: 'Save Question',
                   onTap: () {
@@ -1303,9 +1354,10 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Text(label,
-        style: const TextStyle(
-            color: AppColors.primaryLight,
+        style: TextStyle(
+            color: t.primaryGlow,
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.8));
@@ -1319,6 +1371,7 @@ class _TypeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     final types = [
       (QuestionType.multipleChoice, Icons.checklist_rounded, 'Multiple Choice'),
       (QuestionType.yesNo, Icons.thumbs_up_down_rounded, 'Yes / No'),
@@ -1326,39 +1379,39 @@ class _TypeSelector extends StatelessWidget {
     ];
     return Row(
       children: types
-          .map((t) => Expanded(
+          .map((type) => Expanded(
                 child: GestureDetector(
-                  onTap: () => onChanged(t.$1),
+                  onTap: () => onChanged(type.$1),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.only(right: 6),
                     padding: const EdgeInsets.symmetric(
                         vertical: 10, horizontal: 4),
                     decoration: BoxDecoration(
-                      color: selected == t.$1
-                          ? AppColors.primary.withOpacity(0.2)
-                          : AppColors.surfaceHigh,
+                      color: selected == type.$1
+                          ? t.primary.withOpacity(0.2)
+                          : t.surfaceHigh,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                          color: selected == t.$1
-                              ? AppColors.primary
-                              : AppColors.border,
-                          width: selected == t.$1 ? 2 : 1),
+                          color: selected == type.$1
+                              ? t.primary
+                              : t.border,
+                          width: selected == type.$1 ? 2 : 1),
                     ),
                     child: Column(
                       children: [
-                        Icon(t.$2,
-                            color: selected == t.$1
-                                ? AppColors.primaryLight
-                                : AppColors.textMuted,
+                        Icon(type.$2,
+                            color: selected == type.$1
+                                ? t.primaryGlow
+                                : t.textMuted,
                             size: 20),
                         const SizedBox(height: 4),
                         Text(
-                          t.$3,
+                          type.$3,
                           style: TextStyle(
-                            color: selected == t.$1
-                                ? AppColors.primaryLight
-                                : AppColors.textMuted,
+                            color: selected == type.$1
+                                ? t.primaryGlow
+                                : t.textMuted,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1393,15 +1446,16 @@ class _OptionField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          color: isCorrect ? AppColors.success.withOpacity(0.1) : AppColors.surfaceHigh,
+          color: isCorrect ? t.success.withOpacity(0.1) : t.surfaceHigh,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-              color: isCorrect ? AppColors.success : AppColors.border,
+              color: isCorrect ? t.success : t.border,
               width: isCorrect ? 2 : 1),
         ),
         child: Row(
@@ -1410,20 +1464,20 @@ class _OptionField extends StatelessWidget {
               width: 40,
               alignment: Alignment.center,
               child: isCorrect
-                  ? const Icon(Icons.check_circle_rounded,
-                      color: AppColors.success, size: 20)
+                  ? Icon(Icons.check_circle_rounded,
+                      color: t.success, size: 20)
                   : Text(
                       String.fromCharCode(65 + index),
-                      style: const TextStyle(
-                          color: AppColors.textSub,
+                      style: TextStyle(
+                          color: t.textSub,
                           fontWeight: FontWeight.w700),
                     ),
             ),
             Expanded(
               child: TextField(
                 controller: controller,
-                style: const TextStyle(color: AppColors.text, fontSize: 14),
-                cursorColor: AppColors.primary,
+                style: TextStyle(color: t.text, fontSize: 14),
+                cursorColor: t.primary,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -1450,6 +1504,7 @@ class _ChipSelector<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Wrap(
       spacing: 6,
       runSpacing: 6,
@@ -1462,17 +1517,17 @@ class _ChipSelector<T> extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: selected == o
-                        ? AppColors.primary.withOpacity(0.2)
-                        : AppColors.surfaceHigh,
+                        ? t.primary.withOpacity(0.2)
+                        : t.surfaceHigh,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: selected == o ? AppColors.primary : AppColors.border,
+                        color: selected == o ? t.primary : t.border,
                         width: selected == o ? 2 : 1),
                   ),
                   child: Text(
                     label(o),
                     style: TextStyle(
-                        color: selected == o ? AppColors.primaryLight : AppColors.textSub,
+                        color: selected == o ? t.primaryGlow : t.textSub,
                         fontSize: 12,
                         fontWeight: FontWeight.w600),
                   ),

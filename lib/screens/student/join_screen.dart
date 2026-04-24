@@ -189,7 +189,7 @@ class _JoinScreenState extends State<JoinScreen>
               gradient: RadialGradient(
                 colors: [
                   context.tokens.primary.withOpacity(0.15),
-                  Colors.transparent,
+                  context.tokens.primary.withOpacity(0.0),
                 ],
               ),
             ),
@@ -207,7 +207,7 @@ class _JoinScreenState extends State<JoinScreen>
               gradient: RadialGradient(
                 colors: [
                   context.tokens.accent.withOpacity(0.12),
-                  Colors.transparent,
+                  context.tokens.accent.withOpacity(0.0),
                 ],
               ),
             ),
@@ -225,7 +225,7 @@ class _JoinScreenState extends State<JoinScreen>
               gradient: RadialGradient(
                 colors: [
                   context.tokens.primaryGlow.withOpacity(0.06),
-                  Colors.transparent,
+                  context.tokens.primaryGlow.withOpacity(0.0),
                 ],
               ),
             ),
@@ -244,7 +244,7 @@ class _JoinScreenState extends State<JoinScreen>
         border: Border.all(color: context.tokens.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(context.tokens.isDark ? 0.30 : 0.10),
+            color: context.tokens.bgDeep.withOpacity(context.tokens.isDark ? 0.30 : 0.10),
             blurRadius: 40,
             offset: const Offset(0, 16),
           ),
@@ -475,20 +475,20 @@ class _JoinScreenState extends State<JoinScreen>
                 ],
       ),
       child: Material(
-        color: Colors.transparent,
+        color: context.tokens.primary.withOpacity(0.0),
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: _isLoading ? null : _validateAndJoin,
           borderRadius: BorderRadius.circular(16),
           child: Center(
             child: _isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
                       valueColor:
-                          AlwaysStoppedAnimation<Color>(Colors.white),
+                          AlwaysStoppedAnimation<Color>(context.tokens.text),
                     ),
                   )
                 : const Row(

@@ -4,8 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
 import '../../providers/game_provider.dart';
-import '../../constants/app_colors.dart';
+import '../../constants/app_theme.dart';
 import '../../widgets/fallback_state_screen.dart';
+import '../../widgets/theme_toggle.dart';
 
 class TeacherLobbyScreen extends StatefulWidget {
   const TeacherLobbyScreen({Key? key}) : super(key: key);
@@ -19,6 +20,32 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
   bool _pinCopied = false;
+
+  AppColorTokens get t => context.tokens;
+
+  LinearGradient get _gradBtn => LinearGradient(
+        colors: [t.primaryDim, t.primary],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      );
+
+  LinearGradient get _gradPin => LinearGradient(
+        colors: [t.primaryDim, t.primary, t.accent],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+
+  LinearGradient get _gradCard => LinearGradient(
+        colors: [t.surface, t.surfaceHigh],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+
+  LinearGradient get _gradBtnGreen => LinearGradient(
+        colors: [t.success.withOpacity(0.85), t.success],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      );
 
   @override
   void initState() {
@@ -67,7 +94,7 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
     final isWide = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: t.bg,
       appBar: _buildAppBar(context),
       body: isWide
           ? _buildWideLayout(context, provider, canStart, studentCount)
@@ -77,11 +104,11 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: t.surface,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textSub),
+        icon: Icon(Icons.arrow_back_rounded, color: t.textSub),
         onPressed: () {
           if (context.canPop()) {
             context.pop();
@@ -95,16 +122,16 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
           Container(
             padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
-              gradient: AppColors.gradBtn,
+              gradient: _gradBtn,
               borderRadius: BorderRadius.circular(9),
             ),
             child: const Icon(Icons.sensors_rounded, color: Colors.white, size: 16),
           ),
           const SizedBox(width: 10),
-          const Text(
+          Text(
             'Lobby',
             style: TextStyle(
-              color: AppColors.text,
+              color: t.text,
               fontWeight: FontWeight.w700,
               fontSize: 18,
               letterSpacing: -0.3,
@@ -114,16 +141,17 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: AppColors.border),
+        child: Container(height: 1, color: t.border),
       ),
       actions: [
+        const ThemeToggle(),
         Container(
           margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.success.withOpacity(0.15),
+            color: t.success.withOpacity(0.15),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.success.withOpacity(0.4)),
+            border: Border.all(color: t.success.withOpacity(0.4)),
           ),
           child: Row(
             children: [
@@ -134,17 +162,17 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
                   child: Container(
                     width: 7,
                     height: 7,
-                    decoration: const BoxDecoration(
-                      color: AppColors.success,
+                    decoration: BoxDecoration(
+                      color: t.success,
                       shape: BoxShape.circle,
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 6),
-              const Text('LIVE',
+              Text('LIVE',
                   style: TextStyle(
-                      color: AppColors.success,
+                      color: t.success,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.8)),
@@ -166,7 +194,7 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
         SizedBox(
           width: 300,
           child: Container(
-            color: AppColors.surface,
+            color: t.surface,
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -182,7 +210,7 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
             ),
           ),
         ),
-        Container(width: 1, color: AppColors.border),
+        Container(width: 1, color: t.border),
         // Right panel
         Expanded(child: _buildStudentsPanel(provider, studentCount)),
       ],
@@ -217,11 +245,11 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          gradient: AppColors.gradPin,
+          gradient: _gradPin,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.35),
+              color: t.primary.withOpacity(0.35),
               blurRadius: 24,
               offset: const Offset(0, 8),
             ),
@@ -292,12 +320,12 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                       decoration: BoxDecoration(
                         color: _pinCopied
-                            ? AppColors.success.withOpacity(0.25)
+                          ? t.success.withOpacity(0.25)
                             : Colors.white.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: _pinCopied
-                              ? AppColors.success.withOpacity(0.6)
+                              ? t.success.withOpacity(0.6)
                               : Colors.white.withOpacity(0.2),
                         ),
                       ),
@@ -306,14 +334,14 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
                         children: [
                           Icon(
                             _pinCopied ? Icons.check_rounded : Icons.copy_rounded,
-                            color: _pinCopied ? AppColors.success : Colors.white70,
+                            color: _pinCopied ? t.success : t.textSub,
                             size: 14,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             _pinCopied ? 'Copied!' : 'Copy PIN',
                             style: TextStyle(
-                              color: _pinCopied ? AppColors.success : Colors.white70,
+                              color: _pinCopied ? t.success : t.textSub,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -343,16 +371,16 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: AppColors.gradCard,
+        gradient: _gradCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: t.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('SESSION INFO',
+          Text('SESSION INFO',
               style: TextStyle(
-                  color: AppColors.primaryLight,
+                  color: t.primaryGlow,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.1)),
@@ -361,17 +389,17 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
               icon: Icons.quiz_rounded,
               label: 'Quiz',
               value: session.quiz.title,
-              color: AppColors.primary),
+              color: t.primary),
           _InfoRow(
               icon: Icons.help_outline_rounded,
               label: 'Questions',
               value: '${provider.session?.quiz.questions.length ?? 0}',
-              color: AppColors.primaryLight),
+              color: t.primaryGlow),
           _InfoRow(
               icon: Icons.people_rounded,
               label: 'Students',
               value: '${provider.students.length}',
-              color: AppColors.warning),
+              color: t.warning),
         ],
       ),
     );
@@ -386,9 +414,9 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Row(
             children: [
-              const Text('Students',
+                Text('Students',
                   style: TextStyle(
-                      color: AppColors.text,
+                    color: t.text,
                       fontSize: 17,
                       fontWeight: FontWeight.w700)),
               const SizedBox(width: 10),
@@ -428,25 +456,25 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: [
-                    AppColors.primary.withOpacity(0.12),
-                    AppColors.accent.withOpacity(0.12),
+                    t.primary.withOpacity(0.12),
+                    t.accent.withOpacity(0.12),
                   ]),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.group_add_rounded,
-                    color: AppColors.primaryLight.withOpacity(0.7), size: 48),
+                    color: t.primaryGlow.withOpacity(0.7), size: 48),
               ),
             ),
           ),
           const SizedBox(height: 20),
-          const Text('Waiting for students…',
+          Text('Waiting for students…',
               style: TextStyle(
-                  color: AppColors.text,
+                  color: t.text,
                   fontSize: 18,
                   fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
-          const Text('Share the PIN with your class to get started',
-              style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+          Text('Share the PIN with your class to get started',
+              style: TextStyle(color: t.textMuted, fontSize: 13),
               textAlign: TextAlign.center),
         ],
       ),
@@ -460,13 +488,13 @@ class _TeacherLobbyScreenState extends State<TeacherLobbyScreen>
       opacity: canStart ? 1.0 : 0.5,
       child: Container(
         decoration: BoxDecoration(
-          gradient: canStart ? AppColors.gradBtnGreen : null,
-          color: canStart ? null : AppColors.surfaceHigh,
+          gradient: canStart ? _gradBtnGreen : null,
+          color: canStart ? null : t.surfaceHigh,
           borderRadius: BorderRadius.circular(16),
           boxShadow: canStart
               ? [
                   BoxShadow(
-                    color: AppColors.success.withOpacity(0.35),
+                    color: t.success.withOpacity(0.35),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -559,7 +587,11 @@ class _CountBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        gradient: AppColors.gradBtn,
+        gradient: LinearGradient(
+          colors: [context.tokens.primaryDim, context.tokens.primary],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text('$count',
@@ -577,7 +609,7 @@ class _RequirementChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = met ? AppColors.success : AppColors.warning;
+    final color = met ? context.tokens.success : context.tokens.warning;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -636,9 +668,13 @@ class _StudentTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        gradient: AppColors.gradCard,
+        gradient: LinearGradient(
+          colors: [context.tokens.surface, context.tokens.surfaceHigh],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.tokens.border),
       ),
       child: Row(
         children: [
@@ -663,8 +699,8 @@ class _StudentTile extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(name,
-                style: const TextStyle(
-                    color: AppColors.text,
+                style: TextStyle(
+                    color: context.tokens.text,
                     fontSize: 15,
                     fontWeight: FontWeight.w600),
                 overflow: TextOverflow.ellipsis),
@@ -672,13 +708,13 @@ class _StudentTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.12),
+              color: context.tokens.success.withOpacity(0.12),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.success.withOpacity(0.3)),
+              border: Border.all(color: context.tokens.success.withOpacity(0.3)),
             ),
-            child: const Text('Joined',
+            child: Text('Joined',
                 style: TextStyle(
-                    color: AppColors.success,
+                    color: context.tokens.success,
                     fontSize: 11,
                     fontWeight: FontWeight.w600)),
           ),
@@ -710,8 +746,8 @@ class _InfoRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
               child: Text(label,
-                  style: const TextStyle(
-                      color: AppColors.textSub, fontSize: 13))),
+                style: TextStyle(
+                  color: context.tokens.textSub, fontSize: 13))),
           Flexible(
             child: Text(value,
                 style: TextStyle(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
-import 'package:quizz_app/constants/app_colors.dart';
+import '../../constants/app_theme.dart';
 import '../../providers/game_provider.dart';
 import '../../widgets/fallback_state_screen.dart';
 
@@ -17,6 +17,8 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _confettiController;
   bool _navigationLocked = false;
+
+  AppColorTokens get t => context.tokens;
 
   @override
   void initState() {
@@ -54,7 +56,7 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
     final top3 = sorted.take(3).toList();
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: t.bg,
       body: Stack(
         children: [
           // Confetti
@@ -101,9 +103,9 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
   // ── CONFETTI STRIP ────────────────────────────────────
   Widget _buildConfettiStrip() {
     final colors = [
-      AppColors.primary, AppColors.warning, AppColors.success,
-      AppColors.danger, AppColors.primaryLight, AppColors.warning,
-      AppColors.accent, AppColors.success,
+      t.primary, t.warning, t.success,
+      t.danger, t.primaryGlow, t.warning,
+      t.accent, t.success,
     ];
     return Row(
       children: colors
@@ -127,26 +129,26 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              border: Border.all(color: AppColors.border, width: 3),
+              border: Border.all(color: t.border, width: 3),
             ),
             child: const Center(
               child: Text('🏆', style: TextStyle(fontSize: 32)),
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Final Leaderboard',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w800,
-              color: AppColors.text,
+              color: t.text,
               letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Game over — here are the results',
-            style: TextStyle(fontSize: 14, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 14, color: t.textMuted),
           ),
         ],
       ),
@@ -174,18 +176,18 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: t.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: t.border),
         ),
         child: Column(
           children: [
             Text(value,
-                style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.text)),
+              style: TextStyle(
+                fontSize: 20, fontWeight: FontWeight.w800, color: t.text)),
             const SizedBox(height: 3),
             Text(label,
-                style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+              style: TextStyle(fontSize: 11, color: t.textMuted)),
           ],
         ),
       ),
@@ -210,18 +212,18 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
     final medals = ['🥈', '🥇', '🥉'];
     final rankNums = [2, 1, 3];
     final blockColors = [
-      AppColors.textMuted.withAlpha(40),
-      AppColors.primary.withAlpha(30),
-      AppColors.danger.withAlpha(25),
+      t.textMuted.withOpacity(0.16),
+      t.primary.withOpacity(0.12),
+      t.danger.withOpacity(0.10),
     ];
     final blockBorders = [
-      AppColors.textMuted.withAlpha(60),
-      AppColors.primary.withAlpha(60),
-      AppColors.danger.withAlpha(50),
+      t.textMuted.withOpacity(0.24),
+      t.primary.withOpacity(0.24),
+      t.danger.withOpacity(0.20),
     ];
     final avatarGrads = [
       [const Color(0xFF64748B), const Color(0xFF475569)],
-      [AppColors.primary, AppColors.accent],
+      [t.primary, t.accent],
       [const Color(0xFFD85A30), const Color(0xFF993C1D)],
     ];
 
@@ -257,7 +259,7 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
                       end: Alignment.bottomRight,
                     ),
                     border: Border.all(
-                      color: visualPos == 1 ? AppColors.primaryLight : AppColors.border,
+                      color: visualPos == 1 ? t.primaryGlow : t.border,
                       width: visualPos == 1 ? 3 : 2,
                     ),
                   ),
@@ -273,8 +275,8 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
                 const SizedBox(height: 8),
                 Text(
                   player.name,
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.text),
+                  style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w700, color: t.text),
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -282,14 +284,14 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceHigh,
+                    color: t.surfaceHigh,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: t.border),
                   ),
                   child: Text(
                     '${player.score} pts',
-                    style: const TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.warning),
+                    style: TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w700, color: t.warning),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -311,8 +313,8 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: visualPos == 1
-                            ? AppColors.primaryLight
-                            : AppColors.textMuted,
+                            ? t.primaryGlow
+                            : t.textMuted,
                       ),
                     ),
                   ),
@@ -331,19 +333,19 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
       child: Row(
         children: [
-          Expanded(child: Container(height: 1, color: AppColors.border)),
-          const Padding(
+          Expanded(child: Container(height: 1, color: t.border)),
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 14),
             child: Text(
               'FULL RANKINGS',
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textMuted,
+                  color: t.textMuted,
                   letterSpacing: 0.1),
             ),
           ),
-          Expanded(child: Container(height: 1, color: AppColors.border)),
+          Expanded(child: Container(height: 1, color: t.border)),
         ],
       ),
     );
@@ -352,7 +354,7 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
   // ── RANKINGS LIST ─────────────────────────────────────
   Widget _buildRankingsList(List<dynamic> sorted, String? currentName) {
     final avatarGradients = [
-      [AppColors.primary, AppColors.accent],
+      [t.primary, t.accent],
       [const Color(0xFFD85A30), const Color(0xFF993C1D)],
       [const Color(0xFF0F6E56), const Color(0xFF085041)],
       [const Color(0xFF185FA5), const Color(0xFF0C447C)],
@@ -377,16 +379,16 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
           if (rank == 1) rankBg = const Color(0xFFF59E0B);
           else if (rank == 2) rankBg = const Color(0xFF94A3B8);
           else if (rank == 3) rankBg = const Color(0xFFD85A30);
-          else { rankBg = AppColors.surfaceHigh; rankText = AppColors.textSub; }
+          else { rankBg = t.surfaceHigh; rankText = t.textSub; }
 
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: isMe ? AppColors.surfaceHigh : AppColors.surface,
+              color: isMe ? t.surfaceHigh : t.surface,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isMe ? AppColors.primary : AppColors.border,
+                color: isMe ? t.primary : t.border,
               ),
             ),
             child: Row(
@@ -434,23 +436,23 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(student.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.text)),
+                          color: t.text)),
                 ),
                 if (isMe) ...[
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withAlpha(38),
+                      color: t.primary.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.primary.withAlpha(80)),
+                      border: Border.all(color: t.primary.withOpacity(0.3)),
                     ),
-                    child: const Text('You',
+                    child: Text('You',
                         style: TextStyle(
                             fontSize: 10,
-                            color: AppColors.primaryLight,
+                            color: t.primaryGlow,
                             fontWeight: FontWeight.w700)),
                   ),
                   const SizedBox(width: 8),
@@ -458,15 +460,15 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceHigh,
+                    color: t.surfaceHigh,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: t.border),
                   ),
                   child: Text('${student.score}',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.warning)),
+                          color: t.warning)),
                 ),
               ],
             ),
@@ -536,25 +538,31 @@ class _FinalLeaderboardScreenState extends State<FinalLeaderboardScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          gradient: isGradient ? AppColors.gradBtnGreen : null,
-          color: isGradient ? null : AppColors.surfaceHigh,
+          gradient: isGradient
+              ? LinearGradient(
+                  colors: [t.success.withOpacity(0.85), t.success],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                )
+              : null,
+          color: isGradient ? null : t.surfaceHigh,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isGradient ? Colors.transparent : AppColors.border,
+            color: isGradient ? Colors.transparent : t.border,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon,
-                color: isGradient ? Colors.white : AppColors.text, size: 18),
+                color: isGradient ? t.text : t.text, size: 18),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: isGradient ? Colors.white : AppColors.text,
+                color: isGradient ? t.text : t.text,
               ),
             ),
           ],

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
+import '../../constants/app_theme.dart';
 import '../../providers/game_provider.dart';
 import '../../widgets/timer_bar.dart';
 import '../../widgets/fallback_state_screen.dart';
+import '../../widgets/theme_toggle.dart';
 import '../../models/question.dart';
 import '../../models/game_session.dart';
 
@@ -75,49 +77,59 @@ class _HostGameScreenState extends State<HostGameScreen> {
     final current = session.currentQuestionIndex + 1;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1B2A),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Question counter
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha((0.1 * 255).round()),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Question $current of $total',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+        child: Builder(
+          builder: (context) {
+            final t = context.tokens;
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Top bar with question counter and theme toggle
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Question counter
+                      Container(
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: t.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'Question $current of $total',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: t.text,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const ThemeToggle(),
+                    ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Timer info
-              Container(
+                  const SizedBox(height: 20),
+                  // Timer info
+                  Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withAlpha((0.2 * 255).round()),
+                  color: t.warning.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange.withAlpha((0.5 * 255).round()), width: 2),
+                  border: Border.all(color: t.warning.withOpacity(0.5), width: 2),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.timer, color: Colors.orange),
+                    Icon(Icons.timer, color: t.warning),
                     const SizedBox(width: 8),
                     Text(
                       'Time: ${provider.timeRemaining}s / ${question.timeLimit}s',
-                      style: const TextStyle(
-                        color: Colors.orange,
+                      style: TextStyle(
+                        color: t.warning,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -137,18 +149,18 @@ class _HostGameScreenState extends State<HostGameScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white.withAlpha((0.05 * 255).round()),
+                  color: t.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: Colors.white.withAlpha((0.1 * 255).round()),
+                    color: t.border,
                     width: 2,
                   ),
                 ),
                 child: Text(
                   question.text,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: t.text,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -161,8 +173,8 @@ class _HostGameScreenState extends State<HostGameScreen> {
                 children: [
                   Text(
                     '${session.students.where((s) => s.currentAnswer != null).length} / ${session.students.length} answered',
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: t.textSub,
                       fontSize: 16,
                     ),
                     textAlign: TextAlign.center,
@@ -173,12 +185,12 @@ class _HostGameScreenState extends State<HostGameScreen> {
                     const SizedBox(width: 20),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red[600],
+                        backgroundColor: t.danger,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       ),
                       onPressed: () => provider.endQuestion(),
-                      icon: const Icon(Icons.timer_off, size: 18, color: Colors.white),
-                      label: const Text('End Early', style: TextStyle(color: Colors.white)),
+                      icon: Icon(Icons.timer_off, size: 18, color: t.text),
+                      label: Text('End Early', style: TextStyle(color: t.text)),
                     ),
                   ],
                 ],
@@ -193,20 +205,22 @@ class _HostGameScreenState extends State<HostGameScreen> {
                     : _buildAnswerReview(context, question, session, provider),
               ),
             ],
-          ),
+          ));
+          },
         ),
       ),
     );
   }
 
   Widget _buildLiveStats(Question question, GameSession session) {
+    final t = context.tokens;
     Widget statsContent;
     switch (question.type) {
       case QuestionType.yesNo:
         statsContent = _buildBarStats(
           question,
           ['Yes', 'No'],
-          [Colors.orange, Colors.blue],
+          [t.warning, t.primary],
           session,
         );
         break;
@@ -215,10 +229,10 @@ class _HostGameScreenState extends State<HostGameScreen> {
             .map((opt) => opt.length > 20 ? '${opt.substring(0, 18)}...' : opt)
             .toList();
         final colors = [
-          const Color(0xFFE21B3C),
-          const Color(0xFF1368CE),
-          const Color(0xFFFFA602),
-          const Color(0xFF26890C),
+          t.danger,
+          t.primary,
+          t.warning,
+          t.success,
         ];
         statsContent = _buildBarStats(question, labels, colors, session, showLabels: true);
         break;
@@ -242,12 +256,13 @@ class _HostGameScreenState extends State<HostGameScreen> {
   }
 
   Widget _buildStudentAnswerList(GameSession session) {
+    final t = context.tokens;
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha((0.05 * 255).round()),
+        color: t.surfaceHigh.withOpacity(0.6),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withAlpha((0.1 * 255).round())),
+        border: Border.all(color: t.border),
       ),
       child: ListView.builder(
         itemCount: session.students.length,
@@ -257,22 +272,22 @@ class _HostGameScreenState extends State<HostGameScreen> {
           return ListTile(
             dense: true,
             leading: CircleAvatar(
-              backgroundColor: Colors.blue,
+              backgroundColor: t.primary,
               radius: 12,
               child: Text(
                 student.name.isNotEmpty ? student.name[0] : '',
-                style: const TextStyle(fontSize: 12, color: Colors.white),
+                style: TextStyle(fontSize: 12, color: t.text),
               ),
             ),
             title: Text(
               student.name,
-              style: const TextStyle(fontSize: 14, color: Colors.white),
+              style: TextStyle(fontSize: 14, color: t.text),
             ),
             trailing: Text(
               hasAnswered ? '✓ answered' : 'waiting...',
               style: TextStyle(
                 fontSize: 12,
-                color: hasAnswered ? Colors.greenAccent : Colors.grey,
+                color: hasAnswered ? t.success : t.textMuted,
               ),
             ),
           );
@@ -283,6 +298,7 @@ class _HostGameScreenState extends State<HostGameScreen> {
 
   Widget _buildBarStats(Question question, List<String> labels, List<Color> colors,
       GameSession session, {bool showLabels = false, int? highlightCorrect}) {
+    final t = context.tokens;
     final int optionCount = labels.length;
     final List<Widget> bars = [];
 
@@ -307,7 +323,7 @@ class _HostGameScreenState extends State<HostGameScreen> {
                       color: colors[i],
                       borderRadius: BorderRadius.circular(6),
                       border: isCorrect
-                          ? Border.all(color: Colors.green[400]!, width: 3)
+                          ? Border.all(color: t.success, width: 3)
                           : null,
                     ),
                     child: Center(
@@ -315,8 +331,8 @@ class _HostGameScreenState extends State<HostGameScreen> {
                         showLabels
                             ? String.fromCharCode(65 + i)
                             : (i == 0 ? '✓' : '✗'),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: t.text,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -328,7 +344,7 @@ class _HostGameScreenState extends State<HostGameScreen> {
                     child: Text(
                       labels[i],
                       style: TextStyle(
-                        color: Colors.white,
+                        color: t.text,
                         fontSize: 16,
                         fontWeight: isCorrect ? FontWeight.bold : FontWeight.normal,
                       ),
@@ -338,8 +354,8 @@ class _HostGameScreenState extends State<HostGameScreen> {
                     '${percentage.toInt()}% (${count}/${total})',
                     style: TextStyle(
                       color: percentage > 0
-                          ? (isCorrect ? Colors.green[400] : Colors.white)
-                          : Colors.white54,
+                          ? (isCorrect ? t.success : t.text)
+                          : t.textMuted,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -356,9 +372,9 @@ class _HostGameScreenState extends State<HostGameScreen> {
                     builder: (context, value, child) {
                       return LinearProgressIndicator(
                         value: value / 100,
-                        backgroundColor: Colors.grey[800],
+                        backgroundColor: t.surfaceHigh,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          isCorrect ? Colors.green : colors[i],
+                          isCorrect ? t.success : colors[i],
                         ),
                         minHeight: 8,
                       );
@@ -379,16 +395,17 @@ class _HostGameScreenState extends State<HostGameScreen> {
   }
 
   Widget _buildTextAnswersStats(Question question, GameSession session) {
+    final t = context.tokens;
     // Get students who submitted text answers
     final answeredStudents = session.students
         .where((s) => s.currentAnswer != null)
         .toList();
 
     if (answeredStudents.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No answers yet...',
-          style: TextStyle(color: Colors.white54, fontSize: 18),
+          style: TextStyle(color: t.textMuted, fontSize: 18),
         ),
       );
     }
@@ -400,7 +417,7 @@ class _HostGameScreenState extends State<HostGameScreen> {
         final answer = student.currentAnswer.toString();
         final isCorrect = student.isCorrect ?? question.isAnswerCorrect(student.currentAnswer);
         final hasAnswerText = answer.trim().isNotEmpty;
-        final statusColor = isCorrect ? Colors.green : Colors.red;
+        final statusColor = isCorrect ? t.success : t.danger;
         final statusIcon = isCorrect ? Icons.check_circle : Icons.cancel;
         final avatarLabel = _initials(student.name);
 
@@ -409,8 +426,8 @@ class _HostGameScreenState extends State<HostGameScreen> {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isCorrect
-                ? Colors.green.withAlpha((0.2 * 255).round())
-                : Colors.red.withAlpha((0.2 * 255).round()),
+              ? t.success.withOpacity(0.2)
+              : t.danger.withOpacity(0.2),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: statusColor,
@@ -423,7 +440,7 @@ class _HostGameScreenState extends State<HostGameScreen> {
                 backgroundColor: statusColor,
                 child: Text(
                   avatarLabel,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: t.text),
                 ),
               ),
               const SizedBox(width: 12),
@@ -433,8 +450,8 @@ class _HostGameScreenState extends State<HostGameScreen> {
                   children: [
                     Text(
                       student.name,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: t.text,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -442,7 +459,7 @@ class _HostGameScreenState extends State<HostGameScreen> {
                     Text(
                       hasAnswerText ? '"$answer"' : '"(empty)"',
                       style: TextStyle(
-                        color: Colors.white70,
+                        color: t.textSub,
                         fontSize: 14,
                       ),
                     ),
@@ -476,6 +493,7 @@ class _HostGameScreenState extends State<HostGameScreen> {
   }
 
   Widget _buildAnswerReview(BuildContext context, Question question, GameSession session, GameProvider provider) {
+    final t = context.tokens;
     final correctIndex = provider.correctAnswer;
     final isGameEnded = provider.isGameEnded;
 
@@ -488,19 +506,19 @@ class _HostGameScreenState extends State<HostGameScreen> {
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: Colors.green[700]?.withAlpha((0.8 * 255).round()),
+                color: t.success.withOpacity(0.28),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.green[400]!, width: 2),
+                border: Border.all(color: t.success, width: 2),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle, color: Colors.green[400], size: 32),
+                  Icon(Icons.check_circle, color: t.success, size: 32),
                   const SizedBox(width: 12),
                   Text(
                     'CORRECT ANSWER: ${String.fromCharCode(65 + correctIndex)}',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: t.text,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -513,19 +531,19 @@ class _HostGameScreenState extends State<HostGameScreen> {
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: Colors.green[700]?.withAlpha((0.8 * 255).round()),
+                color: t.success.withOpacity(0.28),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.green[400]!, width: 2),
+                border: Border.all(color: t.success, width: 2),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle, color: Colors.green[400], size: 32),
+                  Icon(Icons.check_circle, color: t.success, size: 32),
                   const SizedBox(width: 12),
                   Text(
                     'KEYWORDS: ${question.correctAnswerText}',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: t.text,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -537,7 +555,7 @@ class _HostGameScreenState extends State<HostGameScreen> {
           Text(
             'Answer Distribution',
             style: TextStyle(
-              color: Colors.white.withAlpha((0.8 * 255).round()),
+              color: t.textSub,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -545,10 +563,10 @@ class _HostGameScreenState extends State<HostGameScreen> {
           const SizedBox(height: 10),
           if (question.type != QuestionType.text)
             _buildBarStats(question, question.options!, [
-              const Color(0xFFE21B3C), // Red
-              const Color(0xFF1368CE), // Blue
-              const Color(0xFFFFA602), // Yellow
-              const Color(0xFF26890C), // Green
+              t.danger,
+              t.primary,
+              t.warning,
+              t.success,
             ], session, showLabels: true, highlightCorrect: correctIndex)
           else
             _buildTextAnswersStats(question, session),
@@ -562,8 +580,8 @@ class _HostGameScreenState extends State<HostGameScreen> {
               icon: const Icon(Icons.arrow_forward),
               label: const Text('Next Question →'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green[600],
-                foregroundColor: Colors.white,
+                backgroundColor: t.success,
+                foregroundColor: t.text,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -578,8 +596,8 @@ class _HostGameScreenState extends State<HostGameScreen> {
               icon: const Icon(Icons.leaderboard),
               label: const Text('View Final Leaderboard'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple[600],
-                foregroundColor: Colors.white,
+                backgroundColor: t.primary,
+                foregroundColor: t.text,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

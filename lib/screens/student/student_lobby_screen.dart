@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
-import 'package:quizz_app/constants/app_colors.dart';
+import '../../constants/app_theme.dart';
 import '../../providers/game_provider.dart';
 import '../../widgets/fallback_state_screen.dart';
+import '../../widgets/theme_toggle.dart';
 
 class StudentLobbyScreen extends StatefulWidget {
   final String pin;
@@ -83,9 +84,12 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
     final students = session.students;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: Column(
+        child: Builder(
+          builder: (context) {
+            final t = context.tokens;
+            return Column(
           children: [
             _buildTopBar(),
             Expanded(
@@ -106,6 +110,8 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
               ),
             ),
           ],
+        );
+          },
         ),
       ),
     );
@@ -113,84 +119,96 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
 
   // ── TOP BAR ──────────────────────────────────────────
   Widget _buildTopBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(bottom: BorderSide(color: AppColors.border)),
-      ),
-      child: Row(
-        children: [
-          // PIN pill
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              gradient: AppColors.gradPin,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'GAME PIN',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.white60,
-                    letterSpacing: 0.08,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  widget.pin.split('').join(' '),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 4,
-                  ),
-                ),
-              ],
-            ),
+    return Builder(
+      builder: (context) {
+        final t = context.tokens;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: t.surface,
+            border: Border(bottom: BorderSide(color: t.border)),
           ),
-          const Spacer(),
-          // Live badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.success.withAlpha(30),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.success.withAlpha(80)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 6, height: 6,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.success,
+          child: Row(
+            children: [
+              // PIN pill
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [t.primaryDim, t.primary, t.accent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                const SizedBox(width: 5),
-                const Text(
-                  'LIVE',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.success,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.05,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'GAME PIN',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: t.text.withOpacity(0.6),
+                        letterSpacing: 0.08,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.pin.split('').join(' '),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: t.text,
+                        letterSpacing: 4,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const Spacer(),
+              // Live badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: t.success.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: t.success.withOpacity(0.5)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 6, height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: t.success,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'LIVE',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: t.success,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.05,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              const ThemeToggle(),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   // ── HERO ─────────────────────────────────────────────
   Widget _buildHero() {
+    final t = context.tokens;
     final initial = widget.name.isNotEmpty
         ? widget.name[0].toUpperCase()
         : '?';
@@ -203,8 +221,12 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
             width: 80, height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: AppColors.gradBtn,
-              border: Border.all(color: AppColors.border, width: 3),
+              gradient: LinearGradient(
+                colors: [t.primaryDim, t.primary],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              border: Border.all(color: t.border, width: 3),
             ),
             child: Center(
               child: Text(
@@ -223,22 +245,22 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: AppColors.text,
+                color: Colors.white,
               ),
               children: [
                 const TextSpan(text: 'Welcome, '),
                 TextSpan(
                   text: widget.name,
-                  style: const TextStyle(color: AppColors.primaryLight),
+                  style: TextStyle(color: t.primaryGlow),
                 ),
                 const TextSpan(text: '!'),
               ],
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             "You're in the game lobby",
-            style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 13, color: t.textMuted),
           ),
         ],
       ),
@@ -247,14 +269,15 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
 
   // ── WAITING CARD ─────────────────────────────────────
   Widget _buildWaitingCard(bool gameStarted) {
+    final t = context.tokens;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: t.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: t.border),
         ),
         child: Row(
           children: [
@@ -262,7 +285,7 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
               width: 10, height: 10,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: gameStarted ? AppColors.success : AppColors.warning,
+                color: gameStarted ? t.success : t.warning,
               ),
             ),
             const SizedBox(width: 12),
@@ -272,7 +295,7 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
                   : 'Waiting for teacher to start...',
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textSub,
+                color: t.textSub,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -282,7 +305,7 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
                 'Stand by',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.warning,
+                  color: t.warning,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -294,16 +317,17 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
 
   // ── SECTION HEADER ───────────────────────────────────
   Widget _buildSectionHeader(int count) {
+    final t = context.tokens;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          const Text(
+          Text(
             'PLAYERS JOINED',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: AppColors.textMuted,
+              color: t.textMuted,
               letterSpacing: 0.08,
             ),
           ),
@@ -311,15 +335,15 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
             decoration: BoxDecoration(
-              color: AppColors.surfaceHigh,
+              color: t.surfaceHigh,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: t.border),
             ),
             child: Text(
               '$count player${count == 1 ? '' : 's'}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: AppColors.primaryLight,
+                color: t.primaryGlow,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -331,20 +355,21 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
 
   // ── PLAYERS LIST ─────────────────────────────────────
   Widget _buildPlayersList(List<dynamic> students) {
+    final t = context.tokens;
     if (students.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: t.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: t.border),
           ),
-          child: const Center(
+          child: Center(
             child: Text(
               'Waiting for other students...',
-              style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+              style: TextStyle(color: t.textMuted, fontSize: 14),
             ),
           ),
         ),
@@ -365,14 +390,15 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
   }
 
   Widget _buildPlayerRow(String name, bool isMe, int index) {
+    final t = context.tokens;
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     // Cycle avatar colors for other players
     final avatarColors = [
-      [const Color(0xFFD85A30), const Color(0xFF993C1D)],
-      [const Color(0xFF0F6E56), const Color(0xFF085041)],
-      [const Color(0xFF185FA5), const Color(0xFF0C447C)],
-      [const Color(0xFF993556), const Color(0xFF72243E)],
+      [t.accentDim, t.accent],
+      [t.primaryDim, t.primary],
+      [t.warning, t.accentDim],
+      [t.primaryGlow, t.primary],
     ];
     final colorPair = avatarColors[index % avatarColors.length];
 
@@ -380,10 +406,10 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: isMe ? AppColors.surfaceHigh : AppColors.surface,
+        color: isMe ? t.surfaceHigh : t.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isMe ? AppColors.primary : AppColors.border,
+          color: isMe ? t.primary : t.border,
         ),
       ),
       child: Row(
@@ -394,7 +420,11 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: isMe
-                  ? AppColors.gradBtnGreen
+                  ? LinearGradient(
+                    colors: [t.success.withOpacity(0.85), t.success],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  )
                   : LinearGradient(
                       colors: colorPair,
                       begin: Alignment.topLeft,
@@ -420,7 +450,7 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.text,
+                color: Colors.white,
               ),
             ),
           ),
@@ -429,25 +459,25 @@ class _StudentLobbyScreenState extends State<StudentLobbyScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.primary.withAlpha(38),
+                color: t.primary.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.primary.withAlpha(90),
+                  color: t.primary.withOpacity(0.35),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'You',
                 style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.primaryLight,
+                  color: t.primaryGlow,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             )
           else
-            const Text(
+            Text(
               'joined',
-              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 11, color: t.textMuted),
             ),
         ],
       ),
@@ -484,6 +514,7 @@ class _AnimatedDotsState extends State<_AnimatedDots>
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(3, (i) {
@@ -491,14 +522,14 @@ class _AnimatedDotsState extends State<_AnimatedDots>
           animation: _controller,
           builder: (_, __) {
             final delay = i * 0.33;
-            final t = ((_controller.value - delay) % 1.0).abs();
-            final opacity = 0.2 + (0.8 * (1 - (t * 2 - 1).abs()));
+            final phase = ((_controller.value - delay) % 1.0).abs();
+            final opacity = 0.2 + (0.8 * (1 - (phase * 2 - 1).abs()));
             return Container(
               margin: const EdgeInsets.symmetric(horizontal: 4),
               width: 8, height: 8,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primary.withAlpha((opacity * 255).round()),
+                color: t.primary.withOpacity(opacity),
               ),
             );
           },

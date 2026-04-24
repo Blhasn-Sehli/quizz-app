@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../routes/app_routes.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_theme.dart';
 import '../../providers/game_provider.dart';
 import '../../widgets/answer_button.dart';
 import '../../widgets/fallback_state_screen.dart';
+import '../../widgets/theme_toggle.dart';
 
 class QuestionScreen extends StatefulWidget {
   const QuestionScreen({Key? key}) : super(key: key);
@@ -67,8 +69,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
     if (justRevealed) {
       _shownQuestionState = newState;
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _onReveal(provider));
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onReveal(provider));
       return;
     }
 
@@ -136,8 +137,10 @@ class _QuestionScreenState extends State<QuestionScreen> {
       _answerLocked = true;
       _selectedAnswer = answer;
     });
-    Provider.of<GameProvider>(context, listen: false)
-        .submitStudentAnswer(answer);
+    Provider.of<GameProvider>(
+      context,
+      listen: false,
+    ).submitStudentAnswer(answer);
   }
 
   @override
@@ -184,77 +187,89 @@ class _QuestionScreenState extends State<QuestionScreen> {
     final correctIndex = provider.correctAnswer;
 
     final isRevealed = questionState == 'revealed' || _resultMessage != null;
-    final isAnswering = !isRevealed &&
+    final isAnswering =
+        !isRevealed &&
         !_answerLocked &&
         provider.isGameStarted &&
         timeRemaining > 0 &&
         (questionState == 'answering' || questionState == null);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1B2A),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Question counter
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha((0.1 * 255).round()),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Question $current of $total',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+          child: Builder(
+            builder: (context) {
+              final t = context.tokens;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Top bar with question counter and theme toggle
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Question counter
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: t.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'Question $current of $total',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: t.text,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const ThemeToggle(),
+                    ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-              // Timer bar
-              _buildTimerBar(timeRemaining, question.timeLimit),
-              const SizedBox(height: 30),
+                  // Timer bar
+                  _buildTimerBar(timeRemaining, question.timeLimit),
+                  const SizedBox(height: 30),
 
-              // Question text
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha((0.05 * 255).round()),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withAlpha((0.1 * 255).round()),
-                    width: 2,
+                  // Question text
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: t.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: t.border, width: 2),
+                    ),
+                    child: Text(
+                      question.text,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: t.text,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-                child: Text(
-                  question.text,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-              // Answer area
-              Expanded(
-                child: question.type.name == 'text'
-                    ? _buildTextInput(isAnswering, isRevealed, question)
-                    : options.isEmpty
-                        ? const Center(
+                  // Answer area
+                  Expanded(
+                    child: question.type.name == 'text'
+                        ? _buildTextInput(isAnswering, isRevealed, question)
+                        : options.isEmpty
+                        ? Center(
                             child: Text(
                               'Waiting for options...',
                               style: TextStyle(
-                                  color: Colors.white70, fontSize: 14),
+                                color: t.textMuted,
+                                fontSize: 14,
+                              ),
                             ),
                           )
                         : Column(
@@ -271,77 +286,92 @@ class _QuestionScreenState extends State<QuestionScreen> {
                               );
                             }),
                           ),
-              ),
+                  ),
 
-              // Result banner
-              if (_resultMessage != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: _resultMessage == 'correct'
-                        ? Colors.green[700]
-                        : _resultMessage == 'wrong'
-                            ? Colors.red[700]
-                            : Colors.grey[700],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _resultMessage == 'correct'
-                            ? Icons.check_circle
-                            : _resultMessage == 'wrong'
-                                ? Icons.cancel
-                                : Icons.access_time,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        _resultMessage == 'correct'
-                            ? 'Correct! +$_pointsEarned pts'
-                            : _resultMessage == 'wrong'
-                                ? 'Wrong answer'
-                                : "Time's up!",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                  // Result banner
+                  if (_resultMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Builder(
+                      builder: (context) {
+                        final t = context.tokens;
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: _resultMessage == 'correct'
+                                ? t.success
+                                : _resultMessage == 'wrong'
+                                ? t.danger
+                                : t.textMuted,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _resultMessage == 'correct'
+                                    ? Icons.check_circle
+                                    : _resultMessage == 'wrong'
+                                    ? Icons.cancel
+                                    : Icons.access_time,
+                                color: t.text,
+                                size: 28,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                _resultMessage == 'correct'
+                                    ? 'Correct! +$_pointsEarned pts'
+                                    : _resultMessage == 'wrong'
+                                    ? 'Wrong answer'
+                                    : "Time's up!",
+                                style: TextStyle(
+                                  color: t.text,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
 
-              // Waiting spinner
-              if (_answerLocked && _resultMessage == null) ...[
-                const SizedBox(height: 12),
-                const Center(
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Answer locked! Waiting for results...',
-                        style:
-                            TextStyle(color: Colors.white70, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
+                  // Waiting spinner
+                  if (_answerLocked && _resultMessage == null) ...[
+                    const SizedBox(height: 12),
+                    Builder(
+                      builder: (context) {
+                        final t = context.tokens;
+                        return Center(
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    t.primary,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Answer locked! Waiting for results...',
+                                style: TextStyle(
+                                  color: t.textMuted,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -352,112 +382,125 @@ class _QuestionScreenState extends State<QuestionScreen> {
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_answerLocked && _selectedAnswer != null)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha((0.1 * 255).round()),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  'Your answer: "$_selectedAnswer"',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                      fontStyle: FontStyle.italic),
-                ),
-              )
-            else
-              TextField(
-                controller: _textAnswerController,
-                // KEY FIX: only disable when truly locked or revealed.
-                // The timer ticking does NOT disable the field.
-                enabled: !_answerLocked && !isRevealed,
-                autofocus: true,
-                style: const TextStyle(color: Colors.white, fontSize: 18),
-                textAlign: TextAlign.center,
-                decoration: InputDecoration(
-                  hintText: isRevealed ? 'Time is up' : 'Type your answer...',
-                  hintStyle: const TextStyle(color: Colors.white54),
-                  filled: true,
-                  fillColor: Colors.white.withAlpha((0.1 * 255).round()),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 16),
-                ),
-                onSubmitted: (val) {
-                  final trimmed = val.trim();
-                  if (trimmed.isNotEmpty && !_answerLocked && !isRevealed) {
-                    _handleAnswer(trimmed);
-                  }
-                },
-              ),
-            const SizedBox(height: 16),
-            if (!_answerLocked && !isRevealed)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final val = _textAnswerController.text.trim();
-                    if (val.isNotEmpty) _handleAnswer(val);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
+        child: Builder(
+          builder: (context) {
+            final t = context.tokens;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_answerLocked && _selectedAnswer != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: t.surface,
                       borderRadius: BorderRadius.circular(16),
                     ),
+                    child: Text(
+                      'Your answer: "$_selectedAnswer"',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: t.textSub,
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  )
+                else
+                  TextField(
+                    controller: _textAnswerController,
+                    enabled: !_answerLocked && !isRevealed,
+                    autofocus: true,
+                    style: TextStyle(color: t.text, fontSize: 18),
+                    textAlign: TextAlign.center,
+                    decoration: InputDecoration(
+                      hintText: isRevealed
+                          ? 'Time is up'
+                          : 'Type your answer...',
+                      hintStyle: TextStyle(color: t.textMuted),
+                      filled: true,
+                      fillColor: t.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: t.border),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                    ),
+                    onSubmitted: (val) {
+                      final trimmed = val.trim();
+                      if (trimmed.isNotEmpty && !_answerLocked && !isRevealed) {
+                        _handleAnswer(trimmed);
+                      }
+                    },
                   ),
-                  child: const Text(
-                    'Submit Answer',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                const SizedBox(height: 16),
+                if (!_answerLocked && !isRevealed)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final val = _textAnswerController.text.trim();
+                        if (val.isNotEmpty) _handleAnswer(val);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: t.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        'Submit Answer',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: t.text,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            if (isRevealed && question?.correctAnswerText != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.green.withAlpha((0.2 * 255).round()),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                      color: Colors.green.withAlpha((0.5 * 255).round())),
-                ),
-                child: Text(
-                  'Keywords: ${question!.correctAnswerText}',
-                  style: const TextStyle(
-                      color: Colors.greenAccent, fontSize: 14),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ],
+                if (isRevealed && question?.correctAnswerText != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: t.success.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: t.success.withOpacity(0.5)),
+                    ),
+                    child: Text(
+                      'Keywords: ${question!.correctAnswerText}',
+                      style: TextStyle(color: t.success, fontSize: 14),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
   Widget _buildTimerBar(int timeRemaining, int totalTime) {
-    final progress =
-        totalTime > 0 ? (timeRemaining / totalTime).clamp(0.0, 1.0) : 0.0;
+    final t = context.tokens;
+    final progress = totalTime > 0
+        ? (timeRemaining / totalTime).clamp(0.0, 1.0)
+        : 0.0;
     return Container(
       height: 12,
       decoration: BoxDecoration(
-        color: Colors.grey[800],
+        color: t.surfaceHigh,
         borderRadius: BorderRadius.circular(6),
       ),
       child: FractionallySizedBox(
@@ -468,10 +511,10 @@ class _QuestionScreenState extends State<QuestionScreen> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: progress > 0.5
-                  ? [Colors.green[400]!, Colors.green[600]!]
+                  ? [t.success.withOpacity(0.8), t.success]
                   : progress > 0.25
-                      ? [Colors.orange[400]!, Colors.orange[600]!]
-                      : [Colors.red[400]!, Colors.red[600]!],
+                  ? [t.warning.withOpacity(0.8), t.warning]
+                  : [t.danger.withOpacity(0.8), t.danger],
             ),
             borderRadius: BorderRadius.circular(6),
           ),
